@@ -15,12 +15,11 @@
     min-height: 100vh; padding: 20px; color: #fff;
   }
 
-  .header { text-align: center; margin-bottom: 14px; }
+  .header { text-align: center; margin-bottom: 10px; }
   .header h1 {
     font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 22px;
     letter-spacing: 2px; text-transform: uppercase; color: #C61D23;
   }
-  .header p { font-size: 11px; color: #888; letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
 
   .phase-label {
     font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700;
@@ -28,136 +27,82 @@
     padding: 4px 16px; margin-bottom: 12px; min-width: 290px; text-align: center;
   }
 
-  .scene { position: relative; width: 360px; height: 530px; }
+  .scene { position: relative; width: 360px; height: 400px; overflow: hidden; }
+  .scene svg { position: absolute; inset: 0; display: block; }
 
-  .field {
-    position: absolute; top: 40px; left: 50px; width: 260px; height: 420px;
-    background: #1a5c1a; border: 2px solid rgba(255,255,255,0.7); border-radius: 2px;
-  }
-  .field::before {
-    content: ''; position: absolute; inset: 0;
-    background: repeating-linear-gradient(180deg, transparent, transparent 42px,
-      rgba(255,255,255,0.04) 42px, rgba(255,255,255,0.04) 84px);
-  }
-  /* Zone divider lines (1/3 and 2/3 down the field) */
-  .zone-line { position: absolute; left: 0; right: 0; height: 1px; background: rgba(255,255,255,0.45); }
-  .zone-line.top    { top: 33.33%; }
-  .zone-line.bottom { top: 66.66%; }
+  /* Pass counter — 8 pips, split passes gold, all green when the target is reached */
+  .score-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-family: 'Barlow Condensed', sans-serif; }
+  .score-lbl { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #555; transition: color 0.3s; }
+  .pips { display: flex; gap: 3px; }
+  .pip { width: 20px; height: 20px; border-radius: 3px; border: 1px solid #222; background: #111;
+         transition: background 0.35s, border-color 0.35s; display: flex; align-items: center; justify-content: center;
+         font-size: 9px; font-weight: 700; font-family: 'Barlow Condensed', sans-serif; color: #333; }
+  .pip.on    { background: #C61D23; border-color: #C61D23; color: #fff; }
+  .pip.split { background: #f0a500; border-color: #f0a500; color: #fff; }
+  .pip.win   { background: #22b56e; border-color: #22b56e; color: #fff; }
 
-  .penalty-top, .penalty-bottom {
-    position: absolute; left: 50%; transform: translateX(-50%);
-    width: 116px; height: 42px; border: 1px solid rgba(255,255,255,0.28);
-  }
-  .penalty-top    { top: 0;    border-top: none; }
-  .penalty-bottom { bottom: 0; border-bottom: none; }
-  .goal-top, .goal-bottom {
-    position: absolute; left: 50%; transform: translateX(-50%);
-    width: 64px; height: 10px; border: 2px solid rgba(255,255,255,0.85);
-    background: rgba(255,255,255,0.07);
-  }
-  .goal-top    { top: -10px;    border-bottom: none; }
-  .goal-bottom { bottom: -10px; border-top: none; }
-
-  /* Coach token on right sideline */
-  .coach {
-    position: absolute; width: 22px; height: 22px; border-radius: 50%;
-    background: #222; border: 1.5px solid #888; color: #ccc;
-    font-family: 'Barlow Condensed', sans-serif; font-size: 9px; font-weight: 700;
-    display: flex; align-items: center; justify-content: center; z-index: 10;
+  /* Pass / beat badge, bottom-left */
+  .badge {
+    position: absolute; left: 10px; bottom: 10px; z-index: 30; padding: 3px 9px;
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 13px;
+    letter-spacing: 1.5px; text-transform: uppercase; color: #fff;
+    background: rgba(10,10,10,0.8); pointer-events: none;
   }
 
-  /* ── Players ── */
-  .player {
-    position: absolute; width: 24px; height: 24px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; color: #fff;
-    border: 2px solid rgba(255,255,255,0.3);
-    transition: left 0.85s cubic-bezier(0.4,0,0.2,1), top 0.85s cubic-bezier(0.4,0,0.2,1);
-    z-index: 10;
+  /* Two grids: the one in play is lit, the waiting one dimmed (as on the 2D board) */
+  .gfill { transition: opacity 0.5s; }
+  .gline { transition: stroke 0.4s, opacity 0.5s; }
+  .gdim  { opacity: 0.35; }
+  .glbl {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 10px; letter-spacing: 1px;
+    text-transform: uppercase; text-anchor: middle; fill: #383838; transition: fill 0.4s;
   }
-  .player.gk {
-    border-radius: 5px; font-size: 9px; border-color: rgba(255,255,255,0.75);
-    transition: none;
-    background: #d4a017; color: #1a1a1a; box-shadow: 0 0 8px rgba(212,160,23,0.55);
+  .glbl.active { fill: #9a9a9a; }
+  .gline.win { stroke: #22b56e; }
+  .gline.int { stroke: #C61D23; }
+  .gline.split { stroke: #f0a500; }
+  /* TARGET! / INTERCEPT! / 1 v 1 call-outs */
+  .ftxt { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 22px; letter-spacing: 2px;
+          text-anchor: middle; paint-order: stroke; stroke: rgba(0,0,0,0.55); stroke-width: 4px; opacity: 0; transition: opacity 0.35s; pointer-events: none; }
+  .ftxt.small { font-size: 17px; }
+  .ftxt.show { opacity: 1; }
+  /* Session note on the open grass above the grids */
+  .note {
+    position: absolute; left: 16px; right: 16px; top: 10px; text-align: center; pointer-events: none;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 10.5px; line-height: 1.5; letter-spacing: .7px;
+    text-transform: uppercase; color: #aecaae;
   }
-  .player.red    { background: #C61D23; box-shadow: 0 0 8px rgba(198,29,35,0.5); }
-  .player.blue   { background: #1a6eb5; box-shadow: 0 0 8px rgba(26,110,181,0.5); }
-  .player.green  { background: #2da53b; box-shadow: 0 0 8px rgba(45,165,59,0.55); }
-
-  .player.pulse { animation: pulse 0.45s ease-in-out 4; }
-  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.6)} }
-
-  /* Ball */
-  .ball {
-    position: absolute; width: 13px; height: 13px; border-radius: 50%;
-    background: #fff; border: 1px solid #bbb; z-index: 20;
-    transition: left 0.85s cubic-bezier(0.4,0,0.2,1), top 0.85s cubic-bezier(0.4,0,0.2,1);
-    box-shadow: 0 0 8px rgba(255,255,255,0.9);
-  }
-
-  /* Pass-count / intercept flash chip */
-  .pass-flash {
-    position: absolute;
-    top: 8px; right: 6px;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 13px; font-weight: 900;
-    color: #fff; background: #C61D23;
-    padding: 4px 10px; letter-spacing: 1.5px;
-    border-radius: 2px;
-    opacity: 0; transform: scale(0.6);
-    transition: opacity 0.15s ease-out, transform 0.2s ease-out;
-    z-index: 28; pointer-events: none; white-space: nowrap;
-    box-shadow: 0 0 12px rgba(198,29,35,0.45);
-  }
-  .pass-flash.show { opacity: 1; transform: scale(1); }
-  .pass-flash.intercept {
-    background: #1a6eb5;
-    box-shadow: 0 0 14px rgba(26,110,181,0.55);
-    font-size: 14px;
-  }
-
-  /* Goal flash */
-  .goal-flash {
-    position: absolute; top: 40px; left: 50px; width: 260px; height: 420px;
-    background: rgba(198,29,35,0.12); border: 2px solid #C61D23;
-    pointer-events: none; opacity: 0; transition: opacity 0.3s; z-index: 5; border-radius: 2px;
-  }
-  .goal-flash.show { opacity: 1; }
-
-  .goal-text {
-    position: absolute; top: 47%; left: 50%; transform: translate(-50%,-50%);
-    font-family: 'Barlow Condensed', sans-serif; font-size: 40px; font-weight: 900;
-    color: #C61D23; letter-spacing: 4px; text-transform: uppercase;
-    opacity: 0; transition: opacity 0.3s; z-index: 30;
-    text-shadow: 0 0 24px rgba(198,29,35,0.9); pointer-events: none; white-space: nowrap;
-  }
-  .goal-text.show { opacity: 1; }
-
-  /* Arrow layer (dynamic) */
-  .arrows-svg {
-    position: absolute; top: 0; left: 0; width: 360px; height: 530px;
-    pointer-events: none; z-index: 15;
+  /* Pass trail on the grass: latest pass bright, earlier passes faded */
+  #trail g { transition: opacity 0.4s; }
+  /* Side letters above the attackers' heads */
+  #tags text {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 11px; letter-spacing: 1px;
+    text-anchor: middle; fill: rgba(255,255,255,0.8); paint-order: stroke; stroke: rgba(0,0,0,0.6); stroke-width: 3px;
   }
 
   /* Legend */
-  .legend { display: flex; gap: 14px; margin-top: 10px; justify-content: center; flex-wrap: wrap; max-width: 360px; }
+  .legend { display: flex; gap: 14px; margin-top: 10px; justify-content: center; flex-wrap: wrap; }
   .legend-item {
     display: flex; align-items: center; gap: 5px; font-size: 11px; color: #bbb;
     font-family: 'Barlow Condensed', sans-serif; letter-spacing: 1px; text-transform: uppercase;
   }
   .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
-  .legend-dot.red    { background: #C61D23; }
-  .legend-dot.blue   { background: #1a6eb5; }
-  .legend-dot.green  { background: #2da53b; }
-  .legend-dot.gk     { background: #d4a017; border-radius: 3px; }
+  .legend-dot.red  { background: #C61D23; }
+  .legend-dot.blue { background: #1a6eb5; }
+  .legend-dot.gk { background: #d9b100; border-radius: 2px; }
+  .legend-dot.green { background: #ff8c1a; }
+  .legend-dot.coach { background: #8d939c; }
+  #splitTint { opacity: 0; transition: opacity 0.28s; }
+  #splitTint.show { opacity: 1; }
+  .legend-dot.gold { background: #f0a500; border-radius: 2px; }
 
-  .step-indicators { display: flex; gap: 7px; margin-top: 10px; }
+  .step-indicators { display: flex; gap: 5px; margin-top: 10px; }
   .step-dot { width: 7px; height: 7px; border-radius: 50%; background: #333; transition: background 0.3s; }
   .step-dot.active { background: #C61D23; }
   .step-dot.done   { background: #555; }
 
   .desc {
-    font-size: 11px; color: #777; text-align: center; max-width: 320px;
+    font-size: 11px; color: #777; text-align: center; max-width: 330px;
     margin-top: 6px; line-height: 1.5; min-height: 32px;
   }
 
@@ -180,44 +125,44 @@
 <body>
 <div class="tsi-logo-wrap"><img class="tsi-logo" alt="TSI" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCACWAZIDASIAAhEBAxEB/8QAHQABAAIDAQEBAQAAAAAAAAAAAAcIBQYJBAEDAv/EAFEQAAECBQEEBAgLBgQEAwkAAAECAwAEBQYRBwgSITETQVFhFBUWGCJxgZEJMlJVVnKSlaHR0yNCYoKisTNTk5QXJXODJKPBNDZDZHSys8Lw/8QAHAEBAAIDAQEBAAAAAAAAAAAAAAQFAwYHAgEI/8QANhEAAgECAgcHAgUEAwAAAAAAAAECAwQFEQYTITFBkdESFVJTcYGSUbEyM2HB4QcUIqFDYvD/2gAMAwEAAhEDEQA/AK06b+T9QcNKqtNl1zRJUw6rILnak4PPsjfPJK2vmaW96vziD2XFtOodbWpC0EKSpJwQRyIiarFuNFfpn7UpTPMAB9I/e7FjuP4H2RU39OpB6yDeXqdH0PvbK6j/AGdzSi5r8LcVtX03b1/teh+3klbXzNLe9X5w8kra+Zpb3q/OM5CK3XVPE+Zv3ddj5MPiuhg/JK2vmaW96vzh5JW18zS3vV+cZyENdU8T5juux8mHxXQwfklbXzNLe9X5w8kra+Zpb3q/OM5CGuqeJ8x3XY+TD4roYPyStr5mlver84eSVtfM0t71fnGchDXVPE+Y7rsfJh8V0MH5JW18zS3vV+cPJK2vmaW96vzjOQhrqnifMd12Pkw+K6GD8kra+Zpb3q/OHklbXzNLe9X5xnIQ11TxPmO67HyYfFdDB+SVtfM0t71fnDyStr5mlver84zkIa6p4nzHddj5MPiuhr05bVqyko9NP0iWDTKC4s5VyAz2xCsytLkw44htLaVKJCE8kgnkIlfVqqeCUFEghWHJxeFfUTxPvOB74iZtC3HEtoSVLUQEgcyT1RcYepdhzk88zl2mtS3jdxtreCj2VtySW18Nn0WXM/emSE3UpxEpJMqeeWeCU/3PYO+JJoWm8k02lysTC5h0ji0yrdQO7PM/hGdsi3WqBS0pUlKp10AzDnYfkjuH4mNgiJdX8pPs03kjZMA0OoUaSrXse1N8HuXtxf1z2fcwSLPtlCd0Udg/WUon+8ffJK2vmaW96vzjOQiFrqnifM2xYVYr/hh8V0MH5JW18zS3vV+cPJK2vmaW96vzjOQhrqnifM+912Pkw+K6GD8kra+Zpb3q/OHklbXzNLe9X5xnIQ11TxPmO67HyYfFdDB+SVtfM0t71fnDyStr5mlver84zkIa6p4nzHddj5MPiuhg/JK2vmaW96vzh5JW18zS3vV+cZyENdU8T5juux8mHxXQwfklbXzNLe9X5w8kra+Zpb3q/OM5Gm35eTdISuQpyku1AjClc0sevtV3dXXGSk61WXZi3zIOIU8Kw+g61elBJf8AWObf0WzeY69/JOgsmWl6PKPVBY9FGVENj5SuPuERoo5OcAeqP7fedfeW884pxxZKlKUckk9ZMfnF9QpaqOTebOOYtiKv6/bhTUIrckkueW9iEI91CkF1SsSsg3nL7gST2DrPsGYytpLNldTpyqzUILNt5L3JGsG06W7bbM3VJBuYfmCXElefRRySOB7s+2M/5JW18zS3vV+cZllttlpDTSQltCQlIHUAMCP7jWqlxUlJy7T5nebPA7K3oQpOlFtJJtxTbfF7jB+SVtfM0t71fnDyStr5mlver84zkI866p4nzJPddj5MPiuhg/JK2vmaW96vzh5JW18zS3vV+cZyPLVp1um0yZn3fisNleO0jkPacCCq1W8lJ8zxUw7D6cHOVGCS2v8AxXQh7URFNl7hckqXKNS7UukIXuZ9JfM8z1ZA9ka3GSnKfWHpE19+QmzJTDyk+GFlXRKczlSd/GN4ZHDOeIjGxstOPYios4Pe3CuLidWMUk22ktiS4IQhCPZFEIQgBCEIAQhCAEe+hVSao9Tan5VWFtnik8lp60nuMeCEfGlJZMyUqs6U1Ug8mtqZYGiVOVq9Man5RWW3BxSeaFdaT3iPdEKWHci6DUt14qVIvkB5I47vYsd4/ERNLSkutJdaIWhYCkqTxCgeREa7dW7oTy4Pcdv0dxuGLW3aeypHZJfuv0f8H9Qj7uq+SfdDdV8k+6IpsB8hA8OcIAQhCAEIQgBCABPIE+yPu6r5J90D6fIR93VfJPujF3VUfFFvzc9yWhG61nrWeCfx4+yPUYuTUVxMNetGhSlVnuim37ET6j1QVO6JjcVlmW/YN9no8z7TmPZpTS/DrjE24nLUknpOPLfPBP8A6n2RqCiVKJUckniTEy6Y0zxfa7Tq04dnD0yvq8kj3cfbF7dSVC37K9DkGj9GeMYzr6q2Jub57Fzy9kbTCEIoDsghCEAIQhACEIQAhHyPuD2H3QAhH5uvstf4rzTf1lgf3iPL+vf/ABKXRXu1L0yg+9KD/c+7tjNRoTrSyiVeKYvbYZRdWtL0XFs9d+3qmSDlMpDgVNcUuvpOQ13J7Vd/V6+UXLUpaipSipROSSeJj4cx8jYaFCNGOUTiuL4xcYrW1tZ7OC4Jf+3viIQhGYqhEhaOUzfmpqrOJ9FpPQtH+I8VH2DA9sR7G20G9pui0lqnSlPlSEEkrWVZUonJJ4j/APhEe6jOdNxhvZeaPXFra30a908ox2rZnt4dfYmKERUzf1zzjvRScjKuLPJLUupZ/uY2GlyOtVZI8V2XXHknktqiubv2inEVKw6t+h0aWnOGLd2n7fybpHyPJTNIdpKqkFu25iUQf3ph2VYx7FKz+EbTTNmjX2f3fDLiolNSefSTpUof6bZH4x7WGVfqiPLT6wW6nPkupgY0PWGp9DTZalNqwuYV0rg/gTy95/tFgabskX48QavqwiXH7wlZRxz8VLRFSL8Sw1d9TlJSsTFZlJWZcl5edfGFPtoUQF4ycA4JAzyMZ7fD3TqKUnuKbGdNKd7Zzt6EHFy2ZvLdx57ixfwfV6sS111bTmr9G9T66yZiWZeAUgzDafTTungd5sEn/piLD6h7MWk139K+3Q1UCdXk+EUhQZGe9ogtn2JB74p7sV2fN3VrvSJppTrUpQyanMuIJB9DghGf4llII6070dKyQkcTwHOLQ58UI1D2NL4pHSTNoVaQuKXGSlhz/wALM+rCiUH7Q9UV8u+z7ptCe8CuegVGkP5wkTUupAX3pUeCh3gmOluoevWllj9IzVrplZmdRwMlT/8AxL2ewhHBJ+sRFZ9V9sR6uyMxSLYsmneAujdU7XEJmisdvQD0AfWVQBU2EeipTa56ffnHGpdpbyysoYZS02nPUlCQAkdwEeeAEIQgBCEIAQhCAEepuoz7TaW252ZQhIwEpdUAPZmPLCPjSe89RnKG2LyPZ40qXzhN/wCsr84/pmoVV11DTc9OKWtQSkB5XEnkOceGNs0tpnh9zImFpyzJp6ZXZvckj38fZGOq404OTW4n2FOve3MLeMnnJpb+b9ltJYo8oqRpctJrcU4tpsJWtSiSpXWcnvzHrhCNYbbebO/06cacFCO5LIQhCPh7EfytSUIUtaglKQSonqA5mP6jWNTKn4utd5tCsPTZ6BHqPFR93D2xkpwdSaiuJEvruNnbTuJ7opv+PcjCvV+fn6xNTbU5MtNuOEoQl1QCU8gMA9mI8XjSpfOE3/rK/OPHCNmUIpZJH5/q3darNzlJ5t57/qezxpUvnCb/ANZX5x+b87OTCOjfm33UZzurcKhn2mPPH3Bj12V9DG61RrJyfM99u09VVrcpT08A84Ao9ieaj7gYn1CUoQlCEhKEgJSB1AchEMafs3AireF0G3p2sPhCkJQxLOO4J4Z9AExLVL0+2hrg3fALEm5BK+SpllEtgdv7ZQP4RX3ltVrzXZ3I3XRfHMPwm3m62bnJ8FwW7fl+p74+LIQMrISO1RxGcpey/rpWMKq1y0mlNn4yTPLWoexpGPxj3Tmyxa1DBe1C1upsiRxU2pLbZ9inXcn7MR44XLjIuK39QaK/Kot+rS+2Zo0zWqPLf+0VSSbPYX059wMY2ZvW2WOHjIOnsaaUr/0jd37W2QLY4T163Hc0wn4zcqVFKvUW20p/rjHv6obNVCBTbGiEzV1o4JXVprAV3kKU7/aM8cMpre2VVbT+8l+XSivXN/ujRpjUihoyGZede791KR+Jj9JK6rgqxxQrIq1QJ5dE045n2IQY2WY2np2RTuWdpfYVupHxVIp4ccT7RuD8I/hOre03e5CKI/cbjKuCU0ekBtKR9dDeR9qMsbCguBW1dM8WqbpqPol++Z8kLU13q+PF+l9RlwrkZmVU1+LqkiPs7p/q5KnduCu2Xa3DJ8YVyTbKfYFKMfsjRXaYvYlyuJrZac4ldYreB9grKh9mNkoGxPekyEqrl20Kng8xLNOzKh7wgfjGZWtFboorqukOKVfxV5ezy+2RHU5QZSVUU17X22kHrRSm5ycPsLbKU/1Rg51nTVheJrUG9K2f/laMhlB/mdmCf6YtJQNiezGCk1y7q7UCOYlm2pZJ94WfxiQKDst6LUrCl2s5UXB+/Ozzzn9IUE/hGRU4x3Ir6l5cVfzKjfq2ygc1Pabsu5lbfuee/inKwy0PsoYJ/qj+5JpdYWBbemipzs3BOTSv6VAfhHTeg6aae0IJ8UWTb0mpPJbVOaC/tFOfxjam20NoCG0hCU8AlIwBHsjHH+qzs01MOSr1Kk5B1s7q2vAwlaD2HfyoGMUtRUoqOMnsGI6u6r6T2RqZS1ytzUdpyZ3N1mfZARNMHqKXMZI/hVlJ6xHOnX/SOu6SXb4qqKvC6bNBTlOqCEbqJhAPEEfurTkbyerIIyCDAEbwhCAJU2V9P2dRtZKVR6hLeEUmVCp2ooOQFMt49E46lLKE+pRjobRdItL6PgyFgW00sclmnNrV9pQJiE/g8bH8Uad1G9ZtnEzXZjopZRHESzJIyPrOFf2BFo4A80hT5GQa6KRk5eVR8llpKB7gBHpxCEAMDshCEARbtU3v5B6J12qMPdHPzbfgEiQcHpngU7w70p31/wAscujzi1PwiV8eM76pVjSj2ZejMeEzaQeBmHgN0H6rYSf+4YqrAEy6I65vaRWhU5K2ralJqvVR8LmKjOuEtobQnDaEtpwTgqWokqHFXLhGt6haz6l32XG7huueclF85OXV0EvjsLaMBX82TEfQgD7mPkZ2zLSuC765J0eg052amZx9LDR+K2Fn5Sz6KeAJ4nqizMpsQ3EuWSqavqlNPEekhuScWkHs3ioZ90AVJhFk7s2N9TaWyp+iz1ErqQODTT6mHT6g4An+qIFu61rjtGqqpVzUWepM4nj0U0yUFQ7Uk8FDvGRAGGhCEAIQhACEIQAhCEAImPSymeAW0mZWnDs6rpT27g4JH9z7YiWmS6JqoMS7ryGW3HAlbi1YCE54kn1RLc3fFtU5pLEs85NBtIQhDDfAADAGTgRX3/blFU4LPM3TQ3+1t607y5moqKyWb4vflx2L7m1wiOXNQqnPzIlKHRC68s4bSd51avUlMbbb+lW0Hee6uXt6o0yVcGekm92RQB24XhZ9gMQYYdWlv2G3XWnGG0dlPOb/AEWS/wB5fYykw+xLI35l5plPa4sJH4xhJ68rblCQqpIeV8lhJX+I4fjEm2xsV3JPLRMXhe8lKk8VNyTK5lZ7t9ZQAfYYlm1NkTSOjhCqnL1avup4nw2cKEZ+q0EcO4kxKhhkV+KRr1zp/cS2UKSj6tv7ZFPJ3UuRQSmSpkw8eourCB7hkx5nrY1L1JmZd2k2PWZlhtJDZl5Nzohk8SXFAJ7OvqjoI5IaJ6VsB12Vs22VIGQtxLLb6vUTlxR98aJeG15pPRukbpLlVuF4cB4JKltvPet0p4d4BiZStaVJ5xW01nENIsQxCDp1p/4vgkkupWy2dkbWCrbip6SpVDQriTPTyVKA+q0FmJOtvYhT6K7jv0n5TNPkP7LWr/8AWMBd+2vdk3vtWvalKpTZ4BycdXNOAdoA3Eg+wxD926+6u3NvpqF8VRhlfAsyKhKIx2YaCSR6yYkFIW1Rs1bPtlS6Zi7Ki46hI3ius1lMuk+xHR+6PE/qLsl2FlNHpNCqEy3y8X0fwpzh2OuDH9UUPm5qZm5hcxNPuvvLOVOOrK1H1k8Y/E8YAuncO2vSJRoy1pWC+ptPBtc7NJYSn/tthX/3CI0r+1rrFXnyxRjSqQXPRQmQkOlc97hXk+oRXgHBzHSDZA1Csu9bJZlabSqNRblp7KW6lJycq2x0mOHToCQMoV1/JJIPUSBVLxVtP6jjLrV9Tsu7yEw45KS6s9gUUIxGet3Y71Vqiw7WZyhUdKuKw/NKfd9zaSD9qOg2BCAKiW3sRUVsIVcd81CbP7yJCTQwB3byyv8AtEmW7sraMUgpU9b0zVnE8lz884v3pQUpPuib4QBrFu6e2LboT4js+g09SeS2JBtK/tYyffGzAAco+wgAAByEIQgBCEIAQhCAERvtI6ey2pGk9WohYSuostGbpi8ekiYQCUgdyhlB7ld0SRA8oA40KBCiCCCOoxkLYo87cNx06hU1vpJyoTTcqwntWtQSPZkxkNTZZmS1HuaTlwAzL1ebabA5BKXlgfgInb4Pux/H2qk1dk0zvSdvS+80SOBmXQUo9yA4e47sAXqsugSVq2lSrbpycSlNlG5ZrhgqCEgbx7yck95jLwhACEIQAjw3DVZKh0KfrVRdDUnISzkzMLP7qEJKlH3Ax7orft/Xx5O6SM2xKvbk7cUx0SgDgiWawtw+1XRp7wowBRK/bjnbuvOr3NUCTM1ObcmVjOdzeVkJHckYA7hGEhH0c4Az+n9nXDfd0Stt2zILnJ+YJIGcIbQPjLWo8EpHWT3DiSBHQfSPZk02sulyjlWo8tclbSkF+cn0dI1v9fRtH0EpB5ZBPaYxexNp/IWXZK5h+XQq4alLsTdQdIyphDqStmXHZhvdWodrg7BFhYA8iaZTk08U9EjLIlBjdYS0EoGCCMJAwMEAjsxGGum+rRtSpSkhc1fp9GcnUKXKqnX0tIe3SAoBSjjI3k5B+UO/GyHgI5ibWuoX/ELWSpzco/0lJph8X0/BylSGyd5wfXXvKz2bvZAHSuj1yi1lvpKRV6fUUc96VmUOj+kmMZf9o2re9FVb91UyUqEs+D0bbow4ggcVtq+MlQ7U4jkfLTL8s+l+WecZdT8VbailQ9oi53wel8VGtVi5bfrtQmalOIlWZmUfm3lOuoZSooW2FKJIQCpBCRwySYAhDaP0Hr2ks8zPdIKjb064Uy822D+xXxIZc/ixyVwCsHABBAhuOvt9WxSLztOo2zXZYTEhPslp1PWnrC0nqUk4UD1ECOUmpVp1Cxr6q9p1TjM02ZU0VgYDiOaHAOxSSlQ9cAa7CEIAQhCAEZC3aLVbircpRKJIPz9RnHA1Ly7KcqWo/wBh1kngACTwEY+L77EemlJsjTv/AIlXKZaWqVYZ6Rl+aUlCZSSPxfSVwBcxvE5+LuDtyBGFj7Ft51Do3rsuKmURonJZlkmaeA7D8VA9ijE5WVslaS0ENu1KTqFxTCeJVUJkhvPc23ujHccx6NQtqrSi1ulYkKk/cs6jh0VLb3mwe95WEY70lUQfWNqHWPUCdcpmmdoeAhRIBlJRU/MpzyJUU7ifse2ALj0ehWhZlMWaVSqNQJJtPprYYbl0AdqlAD3kxHd8bS2kFqlbarmRWJpGR0FJbMyTj+MYb/qit0vs87QWpk0iev6uqkmlHe/5vUFPrSP4WW95KfV6MSlZWxfY1OCHbor1WrzwA3m2cSjB7eA3l/1CANJvbbZqbpWzZtnS0qMYRMVR8uqPf0be6Af5jGjLuPal1byJDyoVIvcAJFnxfK4PV0g3AoetRi7tmaUacWeEm3bNo8m6jGHzLhx7/UXlf4xuZxiAOU+sWmN1abTVObvCZkfGdTbXMeDNTXTvNoBA3nFYxxOQME/FMaBEmbTl7+X2tFerTLvSSDL3gUgQcjoGspSR3KO8v+aIzgBCEIAQhCAEZC3a3VrdrMtWKHUZmnVCWXvszEu4ULQfWOo8iORHAxj4QBbvTbbTqsnKtSd+22mpqQMGfpy0tOq71NK9An6pSO6JQY2yNJnGkqXKXM0ojilUi2SPc5iKfaEaNXTq5WJiWo3RSdPlE5mqhMpUWm1EeigY4qWewchknqzNHmR3V9NqL/tnYAlzzxtJP8q5Pu9P6kPPG0k/yrk+70/qREfmR3V9NqL/ALZ2HmR3V9NqL/tnYAlzzxtJP8q5Pu9P6kPPG0k/yrk+70/qREfmR3V9NqL/ALZ2HmR3V9NqL/tnYAlzzxtJP8q5Pu9P6kPPF0k/yrk+70/qREfmR3V9NqL/ALZ2Mla2xXV5O5abN1q7KVN0xiabcm5dqWcCnmkqBUgE8BkDGe+ALjW/U2q1QpCrsMTEu1Oy7cwhqYRuOoStIUApOThWDxHVHuj4lISkJAAA5AdUfYAQhCAEYu7q5JW1a9UuCorCZSnSjk06c49FCSrA7zjHtjKRWP4Qm+PEmmclZ0q9uzdfmN58A8RLMkKV6t5ZbHeAqAKHVeeeqdWm6jMnL00+t9w/xLUVH8SY6UbG9keRWhtJ8IZ6OoVj/mc1kcR0gHRp9jYRw7SYoNoLZa9QNWaBbBQVS0xNBycI/dl2/Td49WUpIHeRHVxpCGmkttoShCQAlIGAAOQgD+oQhACEIQAMc09tK9/LLXGpsyz3SU+hjxZLYPAqQSXVe1wqGexIi/GuF5t2BpXX7pUpIflJVQlUq/emF+g0MdfpqGe4GOT8w64++t55xTjjiipa1HJUSckk+uAPzgIQgCwGzvtEVy0NSpqdu6een6HXHEJqORnwZSUhDbzaRyCEhKSkc0AdaUx0GodfolcaLtFqslUmwASuVfS6kZ5cUkj2Rx8YbW68hptJUtZCUgdZPAR18sahy9tWdR7flWkNNU+SZlglCQB6CACeHWSCSe+ANf1Gkr/uGh1CjWw/SqAmZl3GfGE2pbzw3kkZQ23gIPH4xUSOe6cRy9vy0q9ZFzzduXJILkqhKqwpCuKVp6loPJSSOII5x17iMtoHRy3tW7YMnPBMnWJZJNOqSUZWyo/uq+U2TzT7RgwBy0icNiCvMUHaBpRm5luVlp+WfknHHFbqcqTvIBPVlaUAd5A643vRPZCqdwobrN81hNOpnSLCJSR9KYfCVlOSpQ3W0nBI4KOOoRcCw9NrIseiKpFtW5Iycu4ndfJb6RyY/wCotWVL9px2AQBtsUT+EdttqRv23bnZb3TVJBcu8QPjLYUME9+66kfyiLt16oii0pyfMm/MsS43nUS6d5xLYHFSU81YHHdHEjOATwPPXbB1tpuq1ckKZb8kU0WjLdLE48Cl2aWvdClBP7qMJGAeJ5nHIAQFCEIAQhCAETFpJRbx1+1Gp9q126Kkunysqp11ajvtybDaQlIbayEJyShIwBzzxxEOxfT4PCx/FOntSvWbZxM1yY6GWURxEsySMj6zhX9gQBu1ibLmkdrht1+iO3BNox+2qzvSpz/0wA370mJkplOkKXJok6bJS0lLI4IZl2ktoT6kpAAj1QgBCEIARFu1Re/kHonXaoy90c/Nt+ASJBwemeBTvDvSnfX/ACxKUUR+ESvjxnfNKsaUezL0ZjwmbSDwMw8Bug96WwD/ANwwBVY84+QhACEIQAhCEAIkTQbSivasXiij0xKpeQY3XKjPqRlEs0T+KzghKes9gBIx+jum9w6n3ixbtAZxnC5ubWklqVazxcX/AGA5k8B3dN9J9P7e01s6Vtq3pfcZa9N99YHSzLpHpOLPWo+4DAHAQB7dPrPoNiWpJ21bkkmVkJVOAOa3FH4ziz+8tR4k/wBgAI2CEIAQhCAEIQgBCEIAQhCAEIQgAeUcx9r69/LjXGsPy73SU+lnxZJ4OQUtEhah9ZwrOezEXz2jdQGNONJqxXunS3UHGjK01OeK5lwEIx27vFZ7kmOWcszMT083LsIW/MPuBCEjipa1HAHeSTAFzfg5LH6KSr2oM2z6TyhTJFRH7owt5Q7iejTn+FUXEjUtHbPYsLTKg2oyE70hKJS+pPJbyvSdV7VqUY22AEIQgBCEfnMvNS8u4++4ltptJWtajgJSBkknuEAU2+EcvjKqDp9KPcs1OeAPrQyk/wDmKx9UxTSNy1svJ2/tUq/dS1KLU7Nq8GSr9xhPoNJ+wlPtzGmwAhCEAbfo7QZ64tSKJISMm5OFE23MvtNkFZYbUFulKSQVkICjujJOOAMdZpdxt5hDzSwttYCkqHIg8QY48UGrVGhVmTrFJm3JOfknkvy77ZwptaTkER0c0F1+o2otnpeclyi4pBrNUpkuN51SRzfYRzcR1lIypPLB9HeAm6EajO6m6eyVEarU3elBYkHkb7Tq55sb47AnO8TngRjIPDGYgfWTa4siXok9SLIXUKrUH0FpM8hjomGgSApQK8KUoJzjCQM44wBaRpttpsNtIShA5BIwBH9RqmmWoVpaiUBNYtSqtTjIADzJ9F6XV8lxHNJ/A9RIja4A1bV2qIomlt01Za93wSkTTqT/ABBpW6PfiOSJ5x0e22q1NymiNbpzLstIS80G2nZqaWUl476VCXYSAStat3iThKUhWT2c4TzgD5CEIAQhCAMjbNHnbguGnUOmt9JOVCZblmE9q1qCR+JjrfZNvyVqWjSbbpyQJWmyjcs2cYKghIG8e8nJPeY5MWVc1Xs655O5KC+0xUpJRVLuuModCFFJTndWCCcE4yOHOJV86vW/6WMfdct+nAHSqEc1fOr1v+ljH3XLfpw86vW/6WMfdct+nAHSqEc1fOr1v+ljH3XLfpw86vW/6WMfdct+nAHRy4KrJUOhz9ZqLoak5GXcmX1n91CElSj7gY5I39cc5d96Vi56gT4RU5tyZUnOdwKVkJHckYSO4Rvd5bQ+rV3WzO25XLmQ/TZ5AbmG25FhorTkHG8lAIBwM4PEcIiiAEIQgBCEIARs2mVj1/UK75S2bclenm5g5WtWQ2w2PjOOHqSPx4AZJAjWY3zTDVu99NpabYs6flKf4YsKmHDIMuuOYHAFa0k7o44HLJJgDpFolpjb+ldms0CioDr68OT06tIDk27jipXYkckp5Ad5JO9RzV86vW/6WMfdct+nDzq9b/pYx91y36cAdKoRzV86vW/6WMfdct+nDzq9b/pYx91y36cAdKoRzV86vW/6WMfdct+nDzq9b/pYx91y36cAdKoRzV86vW/6WMfdct+nDzq9b/pYx91y36cAdKoRzV86vW/6WMfdct+nDzq9b/pYx91y36cAdKoRzV86vW/6WMfdct+nDzq9b/pYx91y36cAdKsjtjVNS9RLR06oiqrddYZkkYPQsZ3n5g/Jbb5qP4DrIEc8qvtMa2VNgsO3s+wgjB8FlGGVfaSgEewxFlaq1UrVQcqFYqM3UJx3/EfmnlOuK9alEmAJD2iNYqzq7dgnplCpKjye8imyG9kNJPNajyLisDJ6sADgOOy7ENkeV2t8jPzLO/T6Ag1F7I4FxJwyn175CvUgxBUb3pdq1fOmjE8zZtUYp4n1IVMlUk06pe4CEjK0kgDePAdpgDq7COavnV63/Sxj7rlv04edXrf9LGPuuW/TgDpVCOavnV63/Sxj7rlv04edXrf9LGPuuW/TgDpVEIba18eR2h1RlpZ7o6hXVeLJfB4hCwS6r1dGFDPaoRUTzq9b/pYx91y36caPqjqnfGpjkgq8qwKh4AFiWSmXbZSjfxvHCAASd1PE9kAaSecIQgBCEIAR7KLVKjRarLVWkT0xIz0ssOMTDDhQ42odYI4iPHCAM1ety1K7rjmbhq4lfGM3umZcl2EtB5YSElwpTw31YyogDKiT1xhYQgDbNJpu65W+qf5G13xJVXF7iZxc2mXabRzUXVKO70YAyQcg45E8IvU/rtZWn9vOzFz6qMX1XUt4EtR5dpLal/JSGxup481LWe4dUc6Y+5gCQtc9W7l1ZucVStLEvJS+UyFPaUS1LIPP6yzgbyjxOOoAAR5CEAIQhACEImPQvZ8uvVu3Z2u0WqUmQlZWb8EPhpcBWsISo7u4k8AFCAIchFpPMn1B+lNrfbmP0407WPZqunTCyHrqrdw0GZlm3m2Usyyni4tSzgAbyAOAyefIGAIMhFj7Q2Qb+uS1aVcDNet2UaqUm1NtsvreDiEuJCkhWGyM4I5GMPp9sxXfes/cktS69QW26BVXKU8+6t3ceeQPT3MIJwMjnjnAEEQiT9YdF6/ppdlFtio1Sl1Ko1dAWwiSU4QkKc6NO9vJHNWeXYYlXzJ9QvpRa325j9OAKtwiw2oWyheVk2XVbrqtzW25J02XL7iGlvb68YASnLYGSSAMnrivJ5wAhGesO0Livi5GLetemO1CoP5IbRgBCRzWtR4JSMjJJxxHbFi6PsUXs/KJcql10GSeUMlppDr273FWEj3ZgCq0ImrWvZuvrTChruGbep9XorakpemZJSt5gqOElxCgCASQMjIyRnGY1fRzR299VZx9u2JBpMpLKCZifml9HLtKPJO9glSscd1IJxxOIAj2EWwGxHdng28b0ofT4+J4O9uZ+tz/AAiBtYNL7r0suJujXPLsgvtl2VmZdzfZmEA4JSSAcg8wQCMjhxEAaRCJp0e2a9RNR6QzXJZuSo9He4szVQWpJfHym0JBUR3nAPUTEg1XYnvRmSW5TrtoM3MJTkNONushXcFYV+IgCqsIztbtG46Peb1nT1JmU11qZEqZJCd9anDjdCd3O9vZBBHMEERPlpbGeolUp7c3W6vRaGtwA+DLUt91HcrcG6D6lGAKzQiw2qGyZqBZtuTdfkp6mV+Tk21OzDcrvofQhIypQQoYUAMk4OeHIxp+g+hdz6vy9WmaHUaXIM0xbSHFzqnAHFLCjhO4lXIJ457RAEUwi0nmTahfSi1vtzH6cRjdOhtx0HWSj6XKq1JnKvVEtKS9LqcLLIWVfHJSFcEoKjgHgRAEUwi0nmT6hY/96LW+3Mfpxp2pey1qdZFCmq6tumVqQlGy7MLpr6lLabAypZQtKSQBxO7nA48hAEGQhHvt6lTVcr9PoskEman5puVZCuW+4sJTn2mAPBCLL13Y5vmjUSeq87dVrplpGWcmXiFv5CEJKlf/AA+wGND0I0GujV2m1OoUSpUuQYp7yGVKnS4OkUpJVhO4k8hjOe0QBEkImm4tnG86Lq5QNOHahSn56uS65iXm2i54OhKAsrCiU72QEZ4A/GEZfU3ZYu6wLFqd3Ve5bddk6c2la22VPdIsqWlCUpygDJKhzMAV/hEmaN6IX5qoXH7dkmGKay50btRnXC2wlfAlIIBUtWDySDjhnGYmU7Ed2eDbwvShl/HxDLvbufrc/wAIAqdCN31X0tu7TS6mbeuOTaL8ykLlHpZfSNTKSd3KDgHnwIIBHDhxETYjYo1CUhKjc9rpJGSCt/h3f4cAVchFpPMn1B+lNrfbmP04jleglynXIaSMVikPVYS/hD00lTng7Kei6TCju72cbo5c1CAIhhE8atbMV2abWNO3bWrit+YlZVTaOhllPF1xS1hACd5AHXnieQMejTLZVve+7Fpl2yNcoMlLVFtTjTM0p4OJSFqSCd1BHHdyOPIiAK/wi0nmT6g/Sm1vtzH6cRzrJoHcumU/b1PqdYo9RnK/Mql5RmSU4VAgoGVbyRwy4kcIAiGEWdqOxlfUhT5mfmbrtZDEs0t1xW/McEpBJP8Ah9gMYHTDZXva/bFpt3SNboUjK1FCltMzSng4EhakgndQRx3cjjyIgCAIRLUhoTcc/rjN6TSlXpLtTk2i6/OAueDIAaS4Rnd3s+mlPLmYkrzJ9QfpTa325j9OAKtwi0T2xXfrLK3nbrtVDaElSlFcxgADJP8AhxHuh2gF06t0ipVWhVWkScrITQlSucLg6VW7vHd3UHgAU88cxAEPwi0nmTahfSi1vtzH6cQZrBYM/ppe8xaVUqMjPTks0246uTKyhO+neCfSAOcEHl1wBp0IQgBFh9lLWO+qNW7c0xt6Uoop1Rq6encelVre3XFDpFbwWBkISccOoRXiLB7AtA8b69s1JTe83Rqe/N5PIKUAyn2/tCfZAF8dTrkFo6dXBc4CCum056ZaSseipaUEoSfWrdHtjnnf2tOoGtwotj1xuktMP1VktJkpZTalOqy0nJK1ZA6Q8Itnt6V/xNoBOSCHNxysT0vJADmUhRdV+DWPbFRNjmg+P9oe2ULRvMyLq59045dCgqSft7kAdLpKUbp9KZkpJtIblmUtMoJwMJThI/ARoWzvY9WsLTw024HpR6tTlQmqhPrlVlbanXXCeBIBPohPVzj06/X1N6daX1C5abKy85Um3GGJOXfBKHXXHUoAO6QeRUeB6o3WWdebprbtQLSHktBUwUcEBQGVYz1ZzAFM7zHl98IPSqYB00rQ3mEkniAJZozCv/MJEW9vI3ELXnzaaaequdCfAhPlQl+kyOK93jjGTwiomxE2u8doC/dQn0qcTuuqQT+6uafKh7kNqHqMWi1VndRZOkyitOKRRKlUFP4mE1V9TbaGt08RukEq3sdfLMAVJ2uL01to1nMWfqE7ZYk6+SoJoyXi7usLbX6RWcAFRT1HODFTonTbLqWok9flJb1HkqHIT7VMBl5alPKcbDSnV+mreJIUSCPUkRBg4nEAXc+DZo8ki27rr/7JU67OMyfH46G0I3/YFKX7dzuiw17+X0vd1DqlvFqbt2VamPGtLa6JM1OLKcNbincJASeJ9NJPfFftlfQmoSVjUS/qPqDcNvVWryvTPMSjbK2FtlaujCkOJIX6OD6Q4EnGIsFp5O3y7Xripl1U9kUynustUmp7iW3Kgkoy6tTaVFKQFYAxjOeXCAK47WOvkrOaf1vTqYsy6rfrc+lpP/NJZpCOiDqVKUlSXFbwISQCnI7+ETxsx2y1amhVq05DCWn3pBE5M8OKnXh0iirtI3gPUkDqiD9v8yNbunTizkBoT05OrK3OG+006400PYpW8f5Ite62uTpC2qbLpWthgpl2d4JBKU4QnJ4DkBAEe6JXnW70uC/pmbcZVRaXX10qlBDIScMpw4oq/eySk90QRt1NIuzWHTSwGRl+YWd8p5hMw+22PVwaUYnnZps2r2PpLIUq4mktVx9+YnKilLiVjpnXVK+MkkE7u6OBiAqdNy19/CGLfS8h6St9tbbeDkFUuwUkD1POKPsgC1Nz1CSs2wKlU2WWmJOi0x15toDCEoZaJSkDswkDEVksPbNt2VtKRYvKl12eryUq8MfkpRhDCiVqKQkFwHATujlxIMTttHUG5bo0crlt2lKomKpUktSyQt5LYS2XU9ISVED4gVw58YgW5djqx6FbVSrc5eVe6Knybs06eiZA3W0FR6u6APHs2VCT1b2t7q1NEm8iRkpILkUTCRvtKUlDDeQCQFbiXORPOJk2rdVpzSu27enacpCXp+sNtTGWUuK8FQkqe3EqIG9jdAyeuI6+Deozcvp3clfwnpZ2qplT27rLQUPxeVG4bRWjlX1g1GtySnn35C06ZTphx2cYcbLhmnFpAbCFcfioSd7GOYzmANGvTbIsapWhWadSKDcrdRmpF9iVW80yG0OrQUpUohwnAJB4Axt+wDQPFOgzdTWjDlZqL81vEcShGGU+z9mo+2K+7UOz/aukVlSNYp1xVWfn52fTLNMTCGgndCFKWr0RnhhI/mi7Gi1A8l9JbWoJRuOSlLYQ6MY/aFAUv+pSoA13VBWuouPOngsdFETLo3jWC90xdyd8+hwCcYx6jFadlaqVvVPaynr7uLwNybp1OcdUqVQUsJUEJlkBAJJAKVKPE9piaNUK9tEy9OudcnbVky9AaZmy1NuTrnhCJYJXhw+njfCOPLGY0T4NqgdFbd13OtvjNTbMi0o9QaQVqx7XU+6AJ410u64bUolERask1N1ar1uVpraXZdbqG0OE761BJGAAOZOBmMvrBWpa3dLLnrU2UBuVpcwsBfJaujISn2qKR7Y9Ll40ZGo7dhEzHjhylKqowgdGGA6G+Ks5Ct7qxyHOK/fCMt1NvTCizUtWJpiRXVBLzUgggNTBLa1oWrhklJbOBnHHOMgGAKFnnEwbG1B8f7Q9tIWjeZkHHJ93hy6JBUk/b3Ih6Lb/AAbVA6e67quZbfCUkmpJtRHW6srVj2ND3wBYTbBr3k/s83Q4hZS9OsIkGxn4xeWEKH2Cs+yMFsIUDxNs/SE6pvccrE7MTyuHHG90Sf6WgfbGkfCQV4sWda1stLO/PT7k4tKeZDKN1Of5nfwixml1CTa+m9uW/u7hp9Ml2HPrpbG+ftZMAfpV7TkKlfVCu144nKNLzbDIxzD4bBOe7cP2jEFfCH1/xdo7T6I2rDtWqqApOfjNNJUs/wBXRxPGn900+9LPp9zUvPgk8hSm8nJG6tSSPekxUnbkU5eeu9hacy7yhvIbSop49GuafCCcdoS2D7YAsvs80aToOiNn06RLSm/FLD6lt/FW46kOLV35UsmMa9XdRrQnbkqFwUCo3dTHZ9TlJZoCGFOSkoE+ihaFqbWtec5xv9x6owVm6TXPpba801aGoNwVSXk2HXpWizstLvNOuBJUltBICm95XD0VJHHMSjY05XqhZ1LnropjNMrT8slyck2l7yWXDzSDk8uHWePWYAoDtQa4SV/6gWxV6DR56TRbZKvBqswlJVMdKlSkqQlR9H9mgEEg8xwi0Wx9qjemqtCr1YupmltS8pNNy0p4FLqbyvcKnN7eUrPBTeOXMxSzaoqcjV9oO8ZunJaSwKh0GWsbqltIS2tXDmSpKjnri7exBQfEezxRnlo3Hao8/UHBj5SylB+whEAa9th663LpTVrfpVqs0t2ZnZd6Ym/DWVObqApKW90BScZIc7eQjRNh6cquoOtd76n15DKp4ybTCy0gpbSt1QwEgk4whjHM8DETbc9e8d7QtVlkLK2qTLMSCDnhkI6RY+04oeyLJfB6UDxbotN1laMOVeqOuJVjm20lLaf6g574Aw/wj9f8E09t23EObq6jUlTKwDxKGW8e7edT7owWxZrHfV2XZStPXJOis29R6OoqLEqtL3RtJS2jKisjJUpJJxx4xovwh9f8Y6xyFEbVluk0psKTnk66pSz/AE9HG7fBr0Dhd1zuI/yJBlWPrOOD/wDHAE8bUeo9R0v0pfuKjolF1NycZlZVM0grbKlElWUggn0Er6+eIqZplfN069bS9hu3U1TwmjuqmEolGS22lLQLxJClKySpCB7o3/4Siv4lbRtdtWd9b8+8nPLAS22f6nI1X4OGjNTWpNw1tzBVIUtLLYPUp5wcfc2R7YAtFtT11VvaA3bNtrKX5iS8CaCeZW+oNcO/CyfZG2aa0NFr6dW/b+6EeLqaxLr+slsBR9+TGo7QdoV++GLQolLlEO0tu45adrLinUp3JVrKiME5VkkcBnlGb12uRq0dH7pry3g04xTXksEnH7ZaShsesrUmAOfUjrVcNp623bf9ts02YmqxMzKEqnWVOpQwp4KASApODhCB6hHRLSWrVuvaZW9XLiRLoqlRp7U2+lhsoQkuDfACSSRhJT1xyitmlvVy5KZRZfPTT821Kt4+U4sIH9464z78lbFpvzO6G5KkyKnMdSW2myf7JgClWvu0/fMpe14WXQ26KKM09MUxDqpZanwAktrUF7+M729g44cInrYdoHiPZ5o7y0bjtVffn3B9Ze4g/YbSfbHOOoTU1V6zMTj2XZqdfU6rHEqWtRJ/Ex1v0/oibasWhW82kAU2nsSvDrKG0pJ94JgDQNUpnXmVr87NWSqwmrcYYStK6sX+n4Iy4VbnogZzjuEc4tQ7sqt83nUrrrfQeMKg4FuhhBS2MJCQEgkkABIHOLy6x1/aJbsa7jN23ZEjQfAJsOTKJ1wzDcsUKG8PTwXNzlw59Uc+zACEIQAiVdnzWWoaQTNXmqZQJCqP1JDTalzLq0lpKCo4Tu9pUM5+SIQgD2bQWvFe1fp9JkanR5GlsU51x4JlnFr6VSgEgne7ADj6xjB6CapTmk10zdw06iyVUmpiTMoBMuKSG0qWlRI3es7gEIQBvup+09cN+S9Claja9Ll5Wl1hiqKaafcImVNZ3W155JOeOOMbBcm2Rd1Xt2pUkWnR5Uzso7L9O3MOlTW+gp3gD1jORCEAaFs/681XSGjVOQpVt06orqEwl51+YdWlQCU7qU4TwwMqP8xiTfPZu76FUP8A3LsIQBAmtmotT1Qvt66qpJsSTq2GmES7KlKQ2hAxgFXHiST7Y0iEIAn7RTaivLTq2WLZepchXqTKAiVS+tTTzKSSdwOJyCnJOAUkjlnGBG7VrbbuZ+ScRR7HpUjMEEB2ZnHJhKT27oSjPvhCAK2XnelzXfdrt1V+qvzVWcWlQfzu9Hun0QgDggJ6gOXrixNo7ad4U6lMytwWrTK1MNpCTNNzCpVbmP3lAJUnJ68ADuhCAMbqDti39XqS7T7fpVPtpL6SlUy04p+YSDwO4pQASe/dyOoiIIsK8q/ZF4yd10Cc6Kpyq1KC3BvpcCgQpKwfjBQJB9eefGEIAs1I7b1dblUpnrApz8xjitmorbQT9UoUR74jHWvaUvzUqkOUF1EnRKK7jppWS3ip8A5AccUckZ/dAAPWDCEAYjQTXS7dI1zctSGZSo0udcDr8jNhW7vgY30KScpVgAHmCAMjgImaa2362uWKZTT+ntTGOC3aktxGfqhCT+MIQBAGpWq116jXdKV+7n2pxEm4DLyDaS3LNI3gVISkEkb2OKiSo8OPAROo22LtAwLJoYH/ANS7CEAYHULa2uu7rIrFsOWvSZFuqSq5Vx9l9xS0IWMKwDw4jI9sYfRXaVrWl9iMWrSrUpU40h919cw8+4lbi1qzkgcOAAHqEIQB9kdpq45bWSoakqtymPTk1SUUtEop5zo2W0rSvIPMkqST7THg182hq7q1acpb9Tt6nU1mWnkzgdl3nFKUoIWjdwrhj0yfZCEAQjE2aB7QNW0jtidotKtmm1Azk4Zp2YmHnEr+IlIThPDA3Sf5jCEAYnWLWiral35QrmrFFkWEUhDaUSLTiy26Eu9IreJ4je4JOOoRKVX2z7wnqTOSSLRo0uqYYW0l5Ew6VNlSSN4Z6xnMIQBqeim01c2mdhsWlJ0Cm1OVl3nXGXZh5xKkhat4pwnhjeKj7YjzUzUyvXpqm5qCoIpdTDjDksmWUSJZTKUhBSVcc5TvesmEIAne3dti6pSnNM1yzaXVJhKcKfYmly2/3lO6sZ9WB3CMHqJtg6gXDSnadQKbIWy2+kpVMMLU9MpB4HdWrASe8JyOoiEIAratSlrK1qKlKOSSckmLN2fte3HbNqUm3ZCyqKZWmSbUo0VTDuVJbQEgnvOM+2EIAr1etwTd1XhV7ln0pRM1Oddm3EJJKUFairdGeOBnA7hE7aY7VVfsOwqTaNNs+jvStOZLaXXH3QpwlRUpRA4ZJUTCEAQxqpeU/f8Af1Vu6pMNS8zUXErU02olLYShKEpBPHACREnaF7RlY0pstdtUm1qXOtuTbk04++84la1qCU8k8OASBCEAaVrvqjVtWbxZuKrSMvILYk0SjbDC1KQlKVKVnKuOSVn8I82jep1zaWXSa7bTjClOt9DMy0ygqZmG8g7qgCCCCMgggj1EgoQBYdO2/WRLhC9PZAv4+OKmsJz9Xo8/jEKa366XvquWpStvS8lSWHOkap0kkpa38YC1kkqWrBPEnAycAZMIQBpmnFyrs6+aRdDcgxPu0yZTMtsPKKULWnO7kjjwOD7InXUDa3uu7bJrFsOWvSZFupyi5Vx9l90rQhYwrAPDiMj2whAFe7aqQo9x02rqlG5sSU21MGXcJCHdxYVuEjjg4wcRaHz2bu+hVD/3LsIQBrGqm1ZdN92DVbSftqlU9mpNpacmGHnFLSkLSogA8OO7j1ExXQ84QgBCEIA//9k="/></div>
 
-
 <div class="header">
   <h1>6v3 Rondo with Transition</h1>
-  <p>To Goals</p>
 </div>
 
-<div class="phase-label" id="phaseLabel">Set Up</div>
+<div class="phase-label">To Goals</div>
+
+<div class="score-row">
+  <div class="score-lbl">Passes</div>
+  <div class="pips" id="pips"></div>
+  <div class="score-lbl" id="scoreLbl">Red: 7 passes, then shoot</div>
+</div>
+
 
 <div class="scene">
-  <div class="field">
-    <div class="zone-line top"></div>
-    <div class="zone-line bottom"></div>
-    <div class="penalty-top"></div>
-    <div class="penalty-bottom"></div>
-    <div class="goal-top"></div>
-    <div class="goal-bottom"></div>
-  </div>
-
-  <div class="goal-flash" id="goalFlash"></div>
-  <div class="goal-text"  id="goalText">GOAL!</div>
-  <div class="pass-flash" id="passFlash"></div>
-
-  <svg class="arrows-svg" id="arrowsSvg" viewBox="0 0 360 530">
-    <defs>
-      <marker id="mRed"   markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#C61D23"/></marker>
-      <marker id="mBlue"  markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#1a6eb5"/></marker>
-      <marker id="mGreen" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#2da53b"/></marker>
-      <marker id="mPass"  markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#ffffff"/></marker>
-    </defs>
-    <g id="arrowGroup"></g>
+  <svg id="svg" width="360" height="400" viewBox="0 0 360 400">
+    <rect x="0" y="0" width="360" height="400" fill="#14481a"/>
+    <path id="stripes" fill="rgba(255,255,255,0.03)"/>
+    <path id="zR" fill="#2f541b"/>
+    <path id="zB" fill="#1a5e2d"/>
+    <path id="zG" fill="#1d631f"/>
+    <path id="marks" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.4" stroke-linejoin="round"/>
+    <g id="trail"></g>
+    <g id="shadows"></g>
+    <g id="pool" stroke-linecap="round" stroke-linejoin="round"></g>
+    <g id="tags"></g>
+    <text id="ftSplit" class="ftxt" fill="#f0a500">SPLIT!</text>
+    <text id="ftGoal" class="ftxt" fill="#ffffff">GOAL!</text>
+    <text id="ftWon" class="ftxt" fill="#6fb6f0">WON IT!</text>
   </svg>
+  <div class="badge" id="badge"></div>
 </div>
 
 <div class="legend">
   <div class="legend-item"><div class="legend-dot red"></div>Red — attack top goal</div>
   <div class="legend-item"><div class="legend-dot blue"></div>Blue — defenders</div>
-  <div class="legend-item"><div class="legend-dot green"></div>Green — attack bottom goal</div>
+  <div class="legend-item"><div class="legend-dot green"></div>Orange — attack bottom goal</div>
   <div class="legend-item"><div class="legend-dot gk"></div>GK — neutral</div>
+  <div class="legend-item"><div class="legend-dot coach"></div>Coach</div>
 </div>
 
 <div class="step-indicators" id="stepDots"></div>
@@ -230,409 +175,1191 @@
 </div>
 
 <script>
-// ── Geometry ─────────────────────────────────────────────────────────
-const FL=50, FT=40, FW=260, FH=420;
-function p(px,py){ return [ FL + px/100*FW - 12,  FT + py/100*FH - 12 ]; }
-function b(px,py){ return [ FL + px/100*FW - 6.5, FT + py/100*FH - 6.5 ]; }
-function ctr(pos){ return [ pos[0]+12, pos[1]+12 ]; }
-function bctr(pos){ return [ pos[0]+6.5, pos[1]+6.5 ]; }
+/*@@ENGINE*/
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  TSI 3D ENGINE — shared by every 3D game animation               ║
+// ║  Master copy: tools/engine-3d.js. Do not edit inside an output   ║
+// ║  file — edit here, then run tools/splice-engine.jxa.             ║
+// ╚══════════════════════════════════════════════════════════════════╝
+// The drill script (after this block) must define:
+//   cam    = lookCam({...})                       the camera
+//   W(p)   board px [x,y] → world [x, z] metres
+//   PH     phases: { pl:[[x,y]…], passer, … }      passer = index of the player on the ball
+//   DRILL  { teams:['red',…], roles:['att'|'def'|'gk',…],
+//            oneTouch:bool  (short non-split passes played first time),
+//            flow:bool      (Auto: next pass starts straight off the touch, runs carry on),
+//            centre:idx=>[x,z] (optional; the grid the ball is in, default [0,0]) }
+// World: x right, y up, z away from the camera (metres). Ground is y = 0.
+const PI = Math.PI, TAU = PI*2, SVGNS = 'http://www.w3.org/2000/svg';
+const add3  = (a,b)=>[a[0]+b[0], a[1]+b[1], a[2]+b[2]];
+const sc3   = (a,s)=>[a[0]*s, a[1]*s, a[2]*s];
+const lerp3 = (a,b,t)=>[a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t];
+const sstep = (a,b,x)=>{ const k=Math.min(1, Math.max(0, (x-a)/(b-a))); return k*k*(3-2*k); };
+const mix   = (a,b,t)=>a+(b-a)*t;
+const clamp = (v,a,b)=>Math.max(a, Math.min(b, v));
+const wrap  = a=>Math.atan2(Math.sin(a), Math.cos(a));
+const ease  = k=>k*k*(3-2*k);
+const frac  = x=>x-Math.floor(x);
+const mixQ  = (a,b,k)=>a.map((v,i)=>mix(v, b[i], k));
+const unit  = v=>{ const n=Math.hypot(v[0],v[1])||1; return [v[0]/n, v[1]/n]; };
+const dist  = (a,b)=>Math.hypot(a[0]-b[0], a[1]-b[1]);
+const lerp2 = (a,b,k)=>[mix(a[0],b[0],k), mix(a[1],b[1],k)];
 
-// ── Fixed neutral GKs ────────────────────────────────────────────────
-const TOP_GK = p(50, 3);    // top goal GK
-const BOT_GK = p(50, 97);   // bottom goal GK
-
-// Coach position (off-pitch right sideline, middle of field vertically)
-const COACH_POS = [332, 240];      // scene coords for coach token
-const COACH_BALL = [332+11-6.5, 240+11-6.5]; // ball at coach
-
-// ── Team set positions (2 rows of 3 in each zone) ────────────────────
-const R_SET = [ p(22,11), p(50,11), p(78,11),
-                p(22,27), p(50,27), p(78,27) ];
-
-const B_SET = [ p(22,40), p(50,40), p(78,40),
-                p(22,58), p(50,58), p(78,58) ];
-
-const G_SET = [ p(22,72), p(50,72), p(78,72),
-                p(22,89), p(50,89), p(78,89) ];
-
-// ── Phase-specific shapes ────────────────────────────────────────────
-// Phase 2: Red in play (scrambled in red zone)
-const R_PLAY = [ p(18,18), p(45,8),  p(75,15),
-                 p(30,28), p(58,22), p(80,28) ];
-
-// Phase 2: blue indices 0,1,2 push into red zone (defenders).
-// blue 3,4,5 stay middle (drop slightly to y=55).
-const B_DEF_RED = [ p(30,30), p(50,30), p(70,30),
-                    p(22,55), p(50,55), p(78,55) ];
-
-// Phase 4: blue 0,1,2 (were in red zone) retreat to middle (y=50).
-// blue 3,4,5 (were middle bottom) push down into green zone (y=72).
-const B_DEF_GREEN = [ p(22,50), p(50,50), p(78,50),
-                      p(30,72), p(50,72), p(70,72) ];
-
-// Phase 5: Green in play (scrambled in green zone)
-const G_PLAY = [ p(20,78), p(50,90), p(75,80),
-                 p(30,95), p(58,72), p(80,93) ];
-
-// Phase 6: all 6 blues now in green zone (new attackers)
-const B_ALL_GREEN = [ p(22,72), p(50,72), p(78,72),
-                      p(22,89), p(50,89), p(78,89) ];
-
-// Phase 6: 3 greens to red zone (defenders), 3 greens to middle
-const G_DEF_RED = [ p(30,30), p(50,30), p(70,30),
-                    p(22,55), p(50,55), p(78,55) ];
-
-// ── Phases ────────────────────────────────────────────────────────────
-const phases = [
-  {
-    label:"Set Up",
-    desc:"Three teams of 6 in their zones. Reds top, Blues middle, Greens bottom. Neutral GKs in each goal. Ball with the coach.",
-    showGoal:false,
-    red:R_SET, blue:B_SET, green:G_SET,
-    ball: COACH_BALL,
-    arrows: []
-  },
-  {
-    label:"Coach Plays Into Red",
-    desc:"Coach plays the ball into Red. 3 Blues push up out of the middle to press in the Red zone. Other 3 Blues hold the middle.",
-    showGoal:false,
-    red:R_PLAY, blue:B_DEF_RED, green:G_SET,
-    ball: b(72, 18),
-    arrows: [
-      // 3 blue defenders pushing into red zone (from B_SET top row → B_DEF_RED first 3)
-      { from: ctr(B_SET[0]), to: ctr(B_DEF_RED[0]), color:'#1a6eb5', dashed:true, marker:'mBlue' },
-      { from: ctr(B_SET[1]), to: ctr(B_DEF_RED[1]), color:'#1a6eb5', dashed:true, marker:'mBlue' },
-      { from: ctr(B_SET[2]), to: ctr(B_DEF_RED[2]), color:'#1a6eb5', dashed:true, marker:'mBlue' },
-      // Coach → Red zone (entry pass)
-      { from: COACH_POS, to: bctr(b(72,18)), color:'#ffffff', dashed:false, marker:'mPass' }
-    ]
-  },
-  {
-    label:"Red Score",
-    desc:"Red string together 7 passes with the 3 Blue defenders chasing but not winning it, then finish on the top goal.",
-    showGoal:true, goalPulse:'red',
-    red:R_PLAY,
-    blue:[ p(28,18), p(48,16), p(65,15), p(22,55), p(50,55), p(78,55) ],
-    green:G_SET,
-    ball: b(50, 0),
-    arrows: [
-      // shot from shooter (R_PLAY[1] at p(45,8)) → top goal mouth
-      { from: ctr(R_PLAY[1]), to: bctr(b(50,0)), color:'#ffffff', dashed:false, marker:'mPass' }
-    ],
-    // Blue chasers: blue[0]=left, blue[1]=middle, blue[2]=right. Nearest one presses ball.
-    subSteps: [
-      // pass 1: R[2] → R[0]. Ball arriving on right; blue[2] presses.
-      { ball: b(75,15), flash:'1',
-        blue:[ p(25,22), p(50,20), p(70,18), p(22,55), p(50,55), p(78,55) ],
-        arrows:[{from:ctr(R_PLAY[2]),to:ctr(R_PLAY[0]),color:'#ffffff',dashed:false,marker:'mPass'}] },
-      // pass 2: R[0] → R[3]. Ball on left; blue[0] presses.
-      { ball: b(18,18), flash:'2',
-        blue:[ p(25,18), p(45,22), p(68,22), p(22,55), p(50,55), p(78,55) ],
-        arrows:[{from:ctr(R_PLAY[0]),to:ctr(R_PLAY[3]),color:'#ffffff',dashed:false,marker:'mPass'}] },
-      // pass 3: R[3] → R[5]. Ball lower-left; blue[0] presses.
-      { ball: b(30,28), flash:'3',
-        blue:[ p(32,25), p(52,25), p(72,22), p(22,55), p(50,55), p(78,55) ],
-        arrows:[{from:ctr(R_PLAY[3]),to:ctr(R_PLAY[5]),color:'#ffffff',dashed:false,marker:'mPass'}] },
-      // pass 4: R[5] → R[4]. Ball lower-right; blue[2] presses.
-      { ball: b(80,28), flash:'4',
-        blue:[ p(25,25), p(52,22), p(72,25), p(22,55), p(50,55), p(78,55) ],
-        arrows:[{from:ctr(R_PLAY[5]),to:ctr(R_PLAY[4]),color:'#ffffff',dashed:false,marker:'mPass'}] },
-      // pass 5: R[4] → R[2]. Ball middle; blue[1] presses.
-      { ball: b(58,22), flash:'5',
-        blue:[ p(25,22), p(52,20), p(72,20), p(22,55), p(50,55), p(78,55) ],
-        arrows:[{from:ctr(R_PLAY[4]),to:ctr(R_PLAY[2]),color:'#ffffff',dashed:false,marker:'mPass'}] },
-      // pass 6: R[2] → R[3]. Ball right again; blue[2] presses.
-      { ball: b(75,15), flash:'6',
-        blue:[ p(25,22), p(48,22), p(70,18), p(22,55), p(50,55), p(78,55) ],
-        arrows:[{from:ctr(R_PLAY[2]),to:ctr(R_PLAY[3]),color:'#ffffff',dashed:false,marker:'mPass'}] },
-      // pass 7: R[3] → R[1] (shooter). Ball lower-left; blue[0] presses.
-      { ball: b(30,28), flash:'7',
-        blue:[ p(32,25), p(50,22), p(70,20), p(22,55), p(50,55), p(78,55) ],
-        arrows:[{from:ctr(R_PLAY[3]),to:ctr(R_PLAY[1]),color:'#ffffff',dashed:false,marker:'mPass'}] },
-      // ball arrives at shooter R[1]=p(45,8); blue[1] closest, presses.
-      { ball: b(45,8),
-        blue:[ p(28,18), p(48,16), p(65,15), p(22,55), p(50,55), p(78,55) ],
-        arrows:[] }
-    ]
-  },
-  {
-    label:"Switch to Green",
-    desc:"Coach plays into Green. The other 3 Blues drop down to press in the Green zone. The original 3 defenders retreat to the middle.",
-    showGoal:false,
-    red:R_SET, blue:B_DEF_GREEN, green:G_SET,
-    ball: b(72, 78),
-    arrows: [
-      // 3 blues retreat from red zone → middle
-      { from: ctr(B_DEF_RED[0]), to: ctr(B_DEF_GREEN[0]), color:'#1a6eb5', dashed:true, marker:'mBlue' },
-      { from: ctr(B_DEF_RED[1]), to: ctr(B_DEF_GREEN[1]), color:'#1a6eb5', dashed:true, marker:'mBlue' },
-      { from: ctr(B_DEF_RED[2]), to: ctr(B_DEF_GREEN[2]), color:'#1a6eb5', dashed:true, marker:'mBlue' },
-      // 3 blues push from middle bottom → green zone
-      { from: ctr(B_DEF_RED[3]), to: ctr(B_DEF_GREEN[3]), color:'#1a6eb5', dashed:true, marker:'mBlue' },
-      { from: ctr(B_DEF_RED[4]), to: ctr(B_DEF_GREEN[4]), color:'#1a6eb5', dashed:true, marker:'mBlue' },
-      { from: ctr(B_DEF_RED[5]), to: ctr(B_DEF_GREEN[5]), color:'#1a6eb5', dashed:true, marker:'mBlue' },
-      // Coach → Green zone
-      { from: COACH_POS, to: bctr(b(72,78)), color:'#ffffff', dashed:false, marker:'mPass' }
-    ]
-  },
-  {
-    label:"Blue Intercept & Score",
-    desc:"Green get 4 passes away with Blue chasing. Blue cuts out the 5th pass and shoots immediately on the bottom goal.",
-    showGoal:true, goalPulse:'blue',
-    red:R_SET,
-    blue:[ p(22,50), p(50,50), p(78,50), p(32,80), p(60,85), p(72,80) ],
-    green:G_PLAY,
-    ball: b(50, 100),
-    arrows: [
-      // shot from blue interceptor at p(60,85) → bottom goal
-      { from: ctr(p(60,85)), to: bctr(b(50,100)), color:'#ffffff', dashed:false, marker:'mPass' }
-    ],
-    // Blue chasers in green zone: blue[3]=left, blue[4]=middle, blue[5]=right. Nearest presses.
-    subSteps: [
-      // pass 1: G[4] → G[0]. Ball top-middle of green zone; blue[4] presses.
-      { ball: b(58,72), flash:'1',
-        blue:[ p(22,50), p(50,50), p(78,50), p(28,78), p(52,75), p(78,78) ],
-        arrows:[{from:ctr(G_PLAY[4]),to:ctr(G_PLAY[0]),color:'#ffffff',dashed:false,marker:'mPass'}] },
-      // pass 2: G[0] → G[3]. Ball top-left; blue[3] presses.
-      { ball: b(20,78), flash:'2',
-        blue:[ p(22,50), p(50,50), p(78,50), p(28,76), p(50,80), p(72,82) ],
-        arrows:[{from:ctr(G_PLAY[0]),to:ctr(G_PLAY[3]),color:'#ffffff',dashed:false,marker:'mPass'}] },
-      // pass 3: G[3] → G[5]. Ball lower-left; blue[3] presses.
-      { ball: b(30,95), flash:'3',
-        blue:[ p(22,50), p(50,50), p(78,50), p(32,90), p(55,88), p(75,85) ],
-        arrows:[{from:ctr(G_PLAY[3]),to:ctr(G_PLAY[5]),color:'#ffffff',dashed:false,marker:'mPass'}] },
-      // pass 4: G[5] → G[2]. Ball lower-right; blue[5] presses.
-      { ball: b(80,93), flash:'4',
-        blue:[ p(22,50), p(50,50), p(78,50), p(35,82), p(58,88), p(72,88) ],
-        arrows:[{from:ctr(G_PLAY[5]),to:ctr(G_PLAY[2]),color:'#ffffff',dashed:false,marker:'mPass'}] },
-      // attempted pass 5: G[2] → G[1]. Blue[4] reads play, steps into lane at p(60,85). blue[5] still pressing G[2].
-      { ball: b(75,80),
-        blue:[ p(22,50), p(50,50), p(78,50), p(32,80), p(60,85), p(72,80) ],
-        arrows:[{from:ctr(G_PLAY[2]),to:ctr(p(60,85)),color:'#ffffff',dashed:false,marker:'mPass'}] },
-      // ball arrives at blue[4] — INTERCEPT
-      { ball: b(60,85), flash:'INTERCEPT', intercept:true,
-        blue:[ p(22,50), p(50,50), p(78,50), p(32,80), p(60,85), p(72,80) ],
-        arrows:[] }
-    ]
-  },
-  {
-    label:"Full Rotation",
-    desc:"All 6 Blues become the new attackers in the Green zone. Greens send 3 up to press the Red zone, 3 drop into the middle. Coach restarts into Red.",
-    showGoal:false,
-    red:R_SET, blue:B_ALL_GREEN, green:G_DEF_RED,
-    ball: b(72, 18),
-    arrows: [
-      // Blue full team move into green zone (from B_DEF_GREEN → B_ALL_GREEN)
-      { from: ctr(B_DEF_GREEN[0]), to: ctr(B_ALL_GREEN[0]), color:'#1a6eb5', dashed:true, marker:'mBlue' },
-      { from: ctr(B_DEF_GREEN[1]), to: ctr(B_ALL_GREEN[1]), color:'#1a6eb5', dashed:true, marker:'mBlue' },
-      { from: ctr(B_DEF_GREEN[2]), to: ctr(B_ALL_GREEN[2]), color:'#1a6eb5', dashed:true, marker:'mBlue' },
-      // Greens 0,1,2 up to red zone (from G_SET first row → G_DEF_RED first 3)
-      { from: ctr(G_SET[0]), to: ctr(G_DEF_RED[0]), color:'#2da53b', dashed:true, marker:'mGreen' },
-      { from: ctr(G_SET[1]), to: ctr(G_DEF_RED[1]), color:'#2da53b', dashed:true, marker:'mGreen' },
-      { from: ctr(G_SET[2]), to: ctr(G_DEF_RED[2]), color:'#2da53b', dashed:true, marker:'mGreen' },
-      // Greens 3,4,5 to middle (from G_SET bottom row → G_DEF_RED last 3)
-      { from: ctr(G_SET[3]), to: ctr(G_DEF_RED[3]), color:'#2da53b', dashed:true, marker:'mGreen' },
-      { from: ctr(G_SET[4]), to: ctr(G_DEF_RED[4]), color:'#2da53b', dashed:true, marker:'mGreen' },
-      { from: ctr(G_SET[5]), to: ctr(G_DEF_RED[5]), color:'#2da53b', dashed:true, marker:'mGreen' },
-      // Coach → Red zone (restart pass)
-      { from: COACH_POS, to: bctr(b(72,18)), color:'#ffffff', dashed:false, marker:'mPass' }
-    ]
-  }
-];
-
-// ── Build players ────────────────────────────────────────────────────
-const scene = document.querySelector('.scene');
-const els = { red:[], blue:[], green:[], topGK:null, botGK:null, ball:null, coach:null };
-
-function mkPlayer(team, label, isGK){
-  const el = document.createElement('div');
-  el.className = `player ${team}${isGK?' gk':''}`;
-  el.textContent = label;
-  scene.appendChild(el);
-  return el;
+// ── Camera: turned by `yaw` (0 = looking along +z), tilted down by `pitch` ──
+function toCam(cam, P){
+  const dx=P[0]-cam.pos[0], ry=P[1]-cam.pos[1], dz=P[2]-cam.pos[2];
+  const cy=Math.cos(cam.yaw), sy=Math.sin(cam.yaw), cp=Math.cos(cam.pitch), sp=Math.sin(cam.pitch);
+  const rx=dx*cy - dz*sy, rz=dx*sy + dz*cy;
+  return [ rx, ry*cp + rz*sp, -ry*sp + rz*cp ];
+}
+const toScreen = (cam, c)=>[ cam.cx + cam.f*c[0]/c[2], cam.cy - cam.f*c[1]/c[2], c[2] ];
+const project  = (cam, P)=>toScreen(cam, toCam(cam, P));
+function lookCam(O){
+  const d=[O.look[0]-O.pos[0], O.look[1]-O.pos[1], O.look[2]-O.pos[2]];
+  return { pos:O.pos, yaw:Math.atan2(d[0],d[2]), pitch:Math.atan2(-d[1], Math.hypot(d[0],d[2])), f:O.f, cx:O.cx||180, cy:O.cy };
 }
 
-function createAll(){
-  // Neutral GKs (yellow, placed once)
-  els.topGK = mkPlayer('','GK',true);
-  els.botGK = mkPlayer('','GK',true);
-  els.topGK.style.left = TOP_GK[0]+'px'; els.topGK.style.top = TOP_GK[1]+'px';
-  els.botGK.style.left = BOT_GK[0]+'px'; els.botGK.style.top = BOT_GK[1]+'px';
+// ── Figure rig — body frame: x = figure's right, y = up, z = forward ──
+const B = { LT:.44, LS:.44, ANK:.07, HIP:.1, TOR:.5, SHW:.19, LU:.28, LF:.26, NECK:.17, FOOT:.17 };
+const TEAM = { red:'#C61D23', blue:'#1a6eb5', orange:'#b86d00', green:'#2e8b3e', yellow:'#d9b100', white:'#e8e8e8' };
+const SKIN='#cfd3d6', SHORTS='#141414', BOOT='#0d0d0d', HAIR='#2b2018';
+// Pose = flat array: lift, lean, roll, legL[a,b,g], legR[a,b,g], armL[a,b,e], armR[a,b,e], toe[L,R], anchor, neck
+const Q = (lift,lean,roll,l0,l1,a0,a1,toe,anchor,neck)=>
+  [lift,lean,roll,...l0,...l1,...a0,...a1, ...(Array.isArray(toe) ? toe : [toe||0, toe||0]), anchor||0, neck||0];
 
-  // 6 outfielders per team, numbered 1-6
-  ['red','blue','green'].forEach(team=>{
-    for(let i=1;i<=6;i++){
-      els[team].push(mkPlayer(team, String(i), false));
+function legIK(z, y){
+  const L=B.LT, r=Math.min(Math.hypot(z,y), 2*L-1e-4), al=Math.acos(r/(2*L));
+  return [Math.atan2(z,y)+al, 2*al];
+}
+
+// Forward kinematics → joint positions in the body frame (lowest foot sits on the ground)
+function fk(q){
+  const lift=q[0], lean=q[1], roll=q[2];
+  const leg = i=>({ a:q[3+i*3], b:q[4+i*3], g:q[5+i*3] });
+  const arm = i=>({ a:q[9+i*3], b:q[10+i*3], e:q[11+i*3] });
+  const drop = L=>(B.LT*Math.cos(L.a) + B.LS*Math.cos(L.a-L.b))*Math.cos(L.g);
+  const tp = i=>q[15+i]||0, ankH = i=>Math.max(B.ANK, .03+Math.sin(tp(i))*B.FOOT);
+  const py = Math.max(drop(leg(0))+ankH(0), drop(leg(1))+ankH(1)) + lift;
+  const J = { pelvis:[0,py,0] };
+  [0,1].forEach(i=>{
+    const s=i?1:-1, L=leg(i), cg=Math.cos(L.g), sg=Math.sin(L.g), sp=L.a-L.b;
+    const hip  = [s*B.HIP, py, 0];
+    const knee = add3(hip,  [s*sg*B.LT, -Math.cos(L.a)*cg*B.LT, Math.sin(L.a)*cg*B.LT]);
+    const ank  = add3(knee, [s*sg*B.LS, -Math.cos(sp)*cg*B.LS,  Math.sin(sp)*cg*B.LS]);
+    J['hip'+i]=hip; J['knee'+i]=knee; J['ank'+i]=ank; J['toe'+i]=add3(ank, [s*.02, -.03-Math.sin(tp(i))*B.FOOT, Math.cos(tp(i))*B.FOOT]);
+  });
+  let up = [Math.sin(roll), Math.cos(lean)*Math.cos(roll), Math.sin(lean)];
+  up = sc3(up, 1/Math.hypot(...up));
+  const side = [Math.cos(roll), -Math.sin(roll), 0];
+  J.base = add3(J.pelvis, sc3(up,.12));
+  J.neck = add3(J.pelvis, sc3(up,B.TOR));
+  const nf=q[18]||0, fwd=[0, -Math.sin(lean), Math.cos(lean)];
+  J.head = add3(J.neck, sc3(add3(sc3(up, Math.cos(nf)), sc3(fwd, Math.sin(nf))), B.NECK));
+  [0,1].forEach(i=>{
+    const s=i?1:-1, A=arm(i), cb=Math.cos(A.b), sb=Math.sin(A.b), fp=A.a+A.e;
+    const sh = add3(add3(J.neck, sc3(up,-.06)), sc3(side, s*B.SHW));
+    const el = add3(sh, [s*sb*B.LU, -Math.cos(A.a)*cb*B.LU, Math.sin(A.a)*cb*B.LU]);
+    J['sh'+i]=sh; J['el'+i]=el; J['hand'+i]=add3(el, [s*sb*.5*B.LF, -Math.cos(fp)*cb*B.LF, Math.sin(fp)*cb*B.LF]);
+  });
+  return J;
+}
+function worldOf(f, b){
+  const s=Math.sin(f.yaw), c=Math.cos(f.yaw);
+  return [f.x + c*b[0] + s*b[2], b[1], f.z - s*b[0] + c*b[2]];
+}
+// World ground point → body frame of someone standing at p turned by yaw: [x, z]
+function bodyOf(p, yaw, w){
+  const s=Math.sin(yaw), c=Math.cos(yaw), dx=w[0]-p[0], dz=w[1]-p[1];
+  return [c*dx - s*dz, s*dx + c*dz];
+}
+
+// Smooth curve through keyed values (Hermite; flat at holds and turning points, so planted feet don't drift).
+// keys: [time, v1, v2, …]
+function spline(keys, u){
+  const n=keys.length;
+  if(u<=keys[0][0]) return keys[0].slice(1);
+  if(u>=keys[n-1][0]) return keys[n-1].slice(1);
+  let i=0; while(u>keys[i+1][0]) i++;
+  const k0=keys[i], k1=keys[i+1], d=k1[0]-k0[0], s=(u-k0[0])/d;
+  const tan=(j,c)=>{
+    if(j===0 || j===n-1) return 0;
+    const a=keys[j-1][c], v=keys[j][c], b=keys[j+1][c];
+    return (v-a)*(b-v)<=0 ? 0 : (b-a)/(keys[j+1][0]-keys[j-1][0]);
+  };
+  const h00=2*s*s*s-3*s*s+1, h10=s*s*s-2*s*s+s, h01=-2*s*s*s+3*s*s, h11=s*s*s-s*s;
+  const out=[];
+  for(let c=1;c<k0.length;c++) out.push(h00*k0[c] + h10*d*tan(i,c) + h01*k1[c] + h11*d*tan(i+1,c));
+  return out;
+}
+
+// ── Legs from foot targets: feet = [[x, h, z] left, [x, h, z] right] in the body frame,
+//    h = how far the ankle is lifted off the ground. Hips held at height H. ──
+const LEGR = B.LT+B.LS;
+function legsQ(q, H, feet){
+  let lo=9;
+  feet.forEach((ft,i)=>{
+    const s=i?1:-1, h=Math.max(0, ft[1]), xo=s*ft[0]-B.HIP, yd=H-B.ANK-h;
+    const g=Math.asin(clamp(xo/LEGR, -.35, .6)), cg=Math.cos(g);
+    const [a,b]=legIK(ft[2]/cg, yd/cg);
+    q[3+i*3]=a; q[4+i*3]=b; q[5+i*3]=g;
+    q[15+i]=Math.min(.8, 4*h);          // toes point down as the foot comes off the ground
+    lo=Math.min(lo, h);
+  });
+  q[0]=lo;                               // both feet off the ground (running): the hips stay up
+  return q;
+}
+
+// ── Natural gait ─────────────────────────────────────────────────────
+// Each foot is on the ground for a fraction D of the stride and travels back under the body at the
+// body's own speed, so planted feet never slide; then it swings through on a low arc. The same cycle
+// covers running, backpedalling, side-shuffling and every diagonal in between, relative to where the
+// player faces. Hips dip at mid-stance and sway over the standing leg, arms counter-swing to the legs
+// running forwards and sit out wide shuffling. Stopped, it settles into the ready stance with a
+// small, per-player weight shift so nobody stands frozen or moves in unison.
+const STY = {
+  att: { H:.9,  W:.11, lean:.14, arm:[.2,.22,.65] },    // on the ball side: tall, light on the feet
+  def: { H:.85, W:.15, lean:.26, arm:[.35,.45,.95] },   // defenders: lower, arms out, ready to press
+  gk:  { H:.84, W:.17, lean:.24, arm:[.45,.55,1.0] }    // keepers: set position, hands ready
+};
+const styOf = f=>STY[f.role] || STY.att;
+function gaitQ(f, lx, lz, sp, dt, t){
+  const st=styOf(f), mov=sstep(.08,.6,sp), run=sstep(.8,3.5,sp);
+  const fc=(1.7+.3*Math.min(sp,4))*f.cad;           // strides per second (quick, short steps)
+  f.gait += fc*dt*mov;
+  const D=mix(.62,.4,run), zf=Math.min(mix(.3,.46,sstep(4,6.5,sp)), sp/fc*D/2);   // longer strides when sprinting
+  const lat=Math.abs(lx)*mov, fwd=Math.max(0,lz)*mov, back=Math.max(0,-lz)*mov;
+  const hmax=(.05+.1*run)*mov, on=[];
+  const feet=[0,1].map(i=>{
+    const s=i?1:-1, p=frac(f.gait+(i?.5:0));
+    let o, h=0;
+    if(p<D) o=zf*(1-2*p/D);                                   // on the ground, moving back under the body
+    else {                                                    // swing through: leaves and lands at ground speed (no jerk)
+      const u=(p-D)/(1-D), m=-2*zf/D*(1-D), u2=u*u, u3=u2*u;
+      o=(2*u3-3*u2+1)*-zf + (u3-2*u2+u)*m + (-2*u3+3*u2)*zf + (u3-u2)*m;
+      h=hmax*Math.sin(PI*Math.pow(u,.75));
     }
+    on.push(zf>.01 ? o/zf : 0);
+    return [s*mix(st.W, .2, lat) + lx*o, h, .02 + lz*o];
   });
-
-  // Coach token (fixed on right sideline)
-  const coach = document.createElement('div');
-  coach.className = 'coach';
-  coach.textContent = 'C';
-  coach.style.left = COACH_POS[0]-11+'px';
-  coach.style.top  = COACH_POS[1]-11+'px';
-  scene.appendChild(coach);
-  els.coach = coach;
-
-  // Ball
-  const ball = document.createElement('div');
-  ball.className = 'ball';
-  scene.appendChild(ball);
-  els.ball = ball;
+  const mid=frac(f.gait)-D/2, rest=1-mov;
+  const bob=.022*run*(.5+.5*Math.cos(2*TAU*mid));
+  const H=st.H - .05*lat - .03*fwd*run - bob;
+  const amp=(.55*fwd*run + .15*back*run)*(f.armK==null ? 1 : f.armK);   // f.armK: calmer arms (dribbling)
+  const arm=i=>[ mix(st.arm[0], .3, lat) - amp*on[i], mix(st.arm[1], .55, lat), mix(st.arm[2], 1.3, fwd*run) ];
+  const lean=st.lean + .07*fwd*run - .1*back + .06*lat + .015*Math.sin(t*1.3+f.ph)*rest;
+  const roll=.03*mov*Math.sin(TAU*mid) + .02*Math.sin(t*.9+f.ph)*rest;
+  return legsQ(Q(0, lean, roll, [0,0,0],[0,0,0], arm(0), arm(1), 0, 0, f.neck), H, feet);
 }
 
-// ── Render arrows for a phase ────────────────────────────────────────
-function renderArrows(arrows){
-  const g = document.getElementById('arrowGroup');
-  g.innerHTML = '';
-  arrows.forEach(a=>{
-    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
-    path.setAttribute('d', `M${a.from[0]},${a.from[1]} L${a.to[0]},${a.to[1]}`);
-    path.setAttribute('stroke', a.color);
-    path.setAttribute('stroke-width', a.dashed ? '1.8' : '2.2');
-    path.setAttribute('fill', 'none');
-    if(a.dashed) path.setAttribute('stroke-dasharray','5,3');
-    path.setAttribute('marker-end', `url(#${a.marker})`);
-    path.setAttribute('opacity', a.dashed ? '0.9' : '0.9');
-    g.appendChild(path);
+// ── Passing: plant the standing foot beside the ball, swing back, strike through, follow through ──
+// Times in seconds from the start of the kick. The ball leaves the foot exactly at STRIKE.
+const BR = .115;
+const K = { STRIKE:.52, END:1.16, KB:[.13, .32] };       // KB: ball spot (body frame x, z) for a right-foot pass
+const KICK_R = [[0,.11,0,.02],[.18,.11,0,0],[.38,.15,.24,-.28],[.52,.13,.09,.11],[.7,.1,.2,.52],[1.0,.11,0,.04]];
+const KICK_L = [[0,-.11,0,.02],[.09,-.13,.06,.08],[.18,-.14,0,.15],[.72,-.14,0,.15],[1.08,-.12,.05,.08],[1.16,-.11,0,.02]];
+// foot: 1 = right-foot pass, 0 = left-foot pass (mirror image: ball spot, legs, arms and roll)
+// pin (on-the-move strike): the standing foot's spot in the body frame [x, z], held on the grass
+function kickQ(u, foot, pin){
+  const sw=sstep(.15,.5,u)*(1-sstep(.75,1.05,u));          // through the swing
+  const lean=.16+.1*Math.sin(PI*clamp((u-.3)/.5,0,1));      // body over the ball as it's struck
+  const neck=u<.62 ? .5 : mix(.5,.2,sstep(.62,.9,u));       // eyes on the ball, then up to follow it
+  const m=foot===0 ? -1 : 1, aOpp=[.3+.2*sw,.3+.45*sw,.6], aKick=[.2-.4*sw,.25+.1*sw,.6];
+  const q=Q(0, lean, -.04*sw*m, [0,0,0],[0,0,0], m>0 ? aOpp : aKick, m>0 ? aKick : aOpp, 0, 0, neck);
+  let L=spline(KICK_L,u); const R=spline(KICK_R,u);
+  if(pin){ const wp=sstep(.1,.2,u)*(1-sstep(.7,.95,u)), tg=[m*clamp(pin[0],-.4,.4), 0, clamp(pin[1],-.5,.55)]; L=L.map((v,j)=>mix(v, tg[j], wp)); }
+  return legsQ(q, .86, m>0 ? [L, R] : [[-R[0],R[1],R[2]], [-L[0],L[1],L[2]]]);
+}
+// ── Keeper's save attempt (DRILL.gk): drops, lunges with the near leg towards the shot, body tilting,
+//    arms reaching — then comes back up. u = seconds from the strike, s = +1 diving to the body's right.
+// The body stretches long (arms beyond the head) and the whole figure tips over sideways about the
+// near foot (DIVE_ROLL, applied when drawing), so it goes out flat towards the ball, lands, then gets up.
+const DIVE = { load:.1, out:.2, flat:.45, up:1.35, stand:2.0 };
+function diveQ(u, s){
+  const D=DIVE, crouch=sstep(0,D.load,u)*(1-sstep(D.load,D.out,u)), e=sstep(D.load,D.out+.1,u)*(1-sstep(D.up,D.stand,u));
+  const lead=[s*mix(.17,.3,e), 0, .02], trail=[-s*mix(.17,.05,e), mix(0,.12,e), .02];
+  const reach=[mix(.45,2.95,e), mix(.55,.2,e), mix(1.0,.08,e)];        // arms stretched beyond the head
+  const q=Q(0, mix(.24+.15*crouch,.0,e), 0, [0,0,0],[0,0,0], reach, reach, 0, 0, mix(.3,.1,e));
+  return legsQ(q, mix(.84-.12*crouch, .92, e), s>0 ? [trail, lead] : [lead, trail]);
+}
+const diveRoll = u=>sstep(DIVE.out-.06, DIVE.flat, u)*(1-sstep(DIVE.up, DIVE.stand, u))*1.42;   // 0 → ~80° → 0
+// Joints for drawing: the skeleton, tipped over sideways about the near ankle while diving (f.dive)
+function fkF(f){
+  const J=fk(f.q), dv=f.dive; if(!dv || dv.a<1e-3) return J;
+  const pv=J['ank'+(dv.s>0 ? 1 : 0)], c=Math.cos(dv.a), sn=Math.sin(dv.a)*dv.s, out={};
+  for(const k in J){ const p=J[k], x=p[0]-pv[0], y=p[1]-pv[1];
+    out[k]=[pv[0] + x*c + y*sn, Math.max(.04, pv[1] - x*sn + y*c), p[2]]; }
+  return out;
+}
+// ── Receiving: body already open, the back foot (away from the passer) goes out to meet the ball
+//    and cushions it back to rest in front of the body. v = seconds from the ball's arrival. ──
+const CUSH = .3;
+function recvQ(P, v){
+  const i=P.foot, s=i?1:-1, W0=STY.att.W;
+  const ft=spline([[-.5, s*W0,0,.02],[-.1,...P.m2B],[0,...P.mB],[CUSH,...P.rB],[.62, s*W0,0,.02]], v);
+  const other=[-s*W0, 0, .02];
+  const neck=v<.45 ? .52 : mix(.52,.25,sstep(.45,.7,v));
+  const q=Q(0, .2, -s*.03, [0,0,0],[0,0,0], [.3,.4,.7],[.3,.4,.7], 0, 0, neck);
+  return legsQ(q, .87, i ? [other, ft] : [ft, other]);
+}
+
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  PASS PLANNER                                                    ║
+// ╚══════════════════════════════════════════════════════════════════╝
+const centreOf = idx=>(DRILL.centre ? DRILL.centre(idx) : [0,0]);
+const isDef = i=>DRILL.roles[i]==='def';
+
+// ── Where the ball sits once it's been received: already set for the NEXT pass. ──
+// The receiver's body is opened towards the next target and the first touch puts the ball on the
+// kicking spot (right or left foot, whichever needs the least turning), so the pass follows straight
+// from the touch — no steps round the ball. The body only turns back towards the passer as far as
+// needed to watch the ball in (VIS); that small angle is a pivot on the standing foot at the pass.
+// Held teaching beats on the same pass keep the same spot.
+// ot = the next pass is played first time (DRILL.oneTouch; short, not a split, no pivot needed).
+const REST = .45, OFF = .3, VIS = 1.3, OT_MAX = 7.5;
+const restMemo = {};
+// ph.replay: the same pass again (e.g. a teaching contrast) — it starts from the board before the previous phase
+const pv = idx=>PH[idx] && PH[idx].replay ? idx-2 : idx-1;
+function restSpot(idx){
+  if(restMemo[idx]) return restMemo[idx];
+  const ph=PH[idx], h=ph.passer, me=W(ph.pl[h]);
+  let j=idx; while(j>0 && PH[j-1].passer===h && !PH[j].replay) j--;          // the phase whose pass brought the ball here
+  let k=idx+1; while(PH[k] && PH[k].passer===h && !(DRILL.setUp && PH[k].shot)) k++;   // DRILL.setUp: a shot counts as the next ball         // the phase of the next pass
+  const inc = j>0 && !PH[j].restart ? (Array.isArray(PH[j].onMove) ? W(PH[j].onMove) : restSpot(pv(j)).p) : null, angTo=w=>Math.atan2(w[0]-me[0], w[1]-me[1]);
+  // ph.closed: received with the body closed — square to the passer, facing back the way the ball came
+  if(ph.closed && inc && j===idx){ const u=unit([inc[0]-me[0], inc[1]-me[1]]), y=angTo(inc);
+    return restMemo[idx] = { p:[me[0]+u[0]*REST, me[1]+u[1]*REST], at:me, yawH:y, yawK:y, foot:1, ot:false }; }
+  const C=centreOf(idx), nx=PH[k];
+  if(!nx || nx.restart){                                     // no pass to come: rest it in front, open to the grid
+    let u=unit([C[0]-me[0], C[1]-me[1]]);
+    if(inc){ const toP=unit([inc[0]-me[0], inc[1]-me[1]]); u=unit([u[0]+toP[0], u[1]+toP[1]]); }
+    return restMemo[idx] = { p:[me[0]+u[0]*REST, me[1]+u[1]*REST], at:me, yawH:Math.atan2(u[0],u[1]), yawK:null, foot:1, ot:false };
+  }
+  const tgt = nx.shot && nx.passer===h ? W(nx.shot) : W(nx.pl[nx.passer]), pass=angTo(tgt), inY = inc ? angTo(inc) : null;
+  // right foot: body a little right of the line (inside of the foot plays it across); left: mirror
+  const o=[1,0].map(foot=>{
+    const yawK=pass+(foot ? OFF : -OFF), off=Math.abs(wrap((inY==null ? angTo(C) : inY)-yawK));
+    return { foot, yawK, turn: inY==null ? 0 : Math.max(0, off-VIS), off };
+  }).sort((a,b)=>(a.turn-b.turn) || (a.off-b.off))[0];
+  // nx.firstTime: struck first time whatever the angle (e.g. a finish); DRILL.setUp + ph.dribble: the last
+  // touch of the dribble sets the ball for the next pass, so the body is already open to it
+  const ft = !!nx.firstTime && !!inc && j===idx && k===idx+1;
+  // ph.open: finishes the receive chest-on to the field (facing the centre) — a teaching contrast to ph.closed
+  const yawH = ph.open ? angTo(C) : o.turn>0 && !ft && !(DRILL.setUp && ph.dribble) ? o.yawK + Math.sign(wrap(inY-o.yawK))*o.turn : o.yawK;
+  const kb=[o.foot ? K.KB[0] : -K.KB[0], K.KB[1]], s=Math.sin(o.yawK), c=Math.cos(o.yawK);
+  // DRILL.otWaitRuns: first time only if the next receiver can finish their run before the ball gets there
+  const r2=nx.passer, run2=dist(W(PH[pv(idx)] ? PH[pv(idx)].pl[r2] : ph.pl[r2]), W(ph.pl[r2])) + dist(W(ph.pl[r2]), tgt);
+  const bt=d=>Math.max(.5, d/ballSpeed(d)), avail = inc ? bt(dist(inc,me)) + OT_K + bt(dist(me,tgt)) - .35 : 0;
+  const ot = ft || !!DRILL.oneTouch && !!inc && j===idx && k===idx+1 && o.turn===0 && !nx.splitP && dist(me,tgt)<=OT_MAX && (!DRILL.otWaitRuns || run2<.02 || moveDur(run2, DRILL.roles[r2], paceOf(ph, r2))<=avail);
+  return restMemo[idx] = { p:[me[0]+c*kb[0]+s*kb[1], me[1]-s*kb[0]+c*kb[1]], at:me, yawH, yawK:o.yawK, foot:o.foot, ot };
+}
+
+// ── One pass, timed from the start of the phase ──
+// The passer is already stood at the ball: a quick pivot onto the kicking line if needed (tSet),
+// kick (ball leaves at tKick), the ball rolls to the receiver (tArr) and the first touch sets it (tRest).
+// A first-time pass skips the pivot: the strike lands as the ball arrives.
+const OT_K = .12 + K.STRIKE;
+// noWait: the receiver-is-set check is done by planPhase instead (a flowing drill knows where runs end)
+// ov (a pass on the move): { A, B, yawK, foot, tSet } — the strike spot and timing worked out from the run
+function planPass(idx, noWait, ov){
+  const prev=PH[pv(idx)], ph=PH[idx], p=prev.passer, r=ph.passer;
+  const S0=restSpot(pv(idx)), R=restSpot(idx);
+  const A = ov ? ov.A : S0.p, rest=R.p, dirIn=unit([rest[0]-A[0], rest[1]-A[1]]);
+  const meet = R.ot ? rest : [rest[0]-dirIn[0]*.12, rest[1]-dirIn[1]*.12];
+  const yawK = ov ? ov.yawK : S0.yawK, kickPos = ov ? ov.B : S0.at;
+  let tSet = ov ? ov.tSet : S0.ot ? OT_K-K.STRIKE : DRILL.quick ? .05 + .22*Math.abs(wrap(S0.yawK-S0.yawH)) : .15 + .35*Math.abs(wrap(S0.yawK-S0.yawH));   // DRILL.quick: less time on the ball
+  const rFrom=W(prev.pl[r]), rTo=W(ph.pl[r]), durR=moveDur(dist(rFrom,rTo), DRILL.roles[r]);
+  const ballDur=Math.max(.5, dist(A,meet)/ballSpeed(dist(A,meet)));
+  let tKick=tSet+(ov ? K.STRIKE/ov.ks : K.STRIKE), tArr=tKick+ballDur;
+  if(!noWait && !ov && !S0.ot && !ph.intercept && tArr<durR+.35){ const d=durR+.35-tArr; tSet+=d; tKick+=d; tArr+=d; }   // receiver is set before the ball arrives
+  const yawR=R.yawH;
+  // Receive with the back foot: the one away from the passer
+  const inB=bodyOf(rTo, yawR, A), foot=inB[0]>0 ? 0 : 1, sf=foot?1:-1;
+  const bB=w=>bodyOf(rTo, yawR, w);
+  const mB=bB(meet), rB=bB(rest), m2=bB([meet[0]-dirIn[0]*.08, meet[1]-dirIn[1]*.08]);
+  return { p, r, A, meet, rest, yawK, yawR, kickPos, tSet, tKick, tArr, tRest: R.ot ? tArr : tArr+CUSH, foot,
+           kfoot: ov ? ov.foot : S0.foot, ot:R.ot, inc:null, onMove:!!ov,
+           mB:[mB[0]+sf*.16, .04, mB[1]-.07], rB:[rB[0]+sf*.16, .02, rB[1]-.07], m2B:[m2[0]+sf*.16, .06, m2[1]-.07] };   // inside of the foot against the ball
+}
+// ph.shot = [x, z]: the holder strikes the ball (as it lies) to that point, e.g. into a mini goal — no
+// receiver. A short adjusting step to the ball first, then the same strike as a pass, struck firmly.
+// DRILL.gk: the keeper's index, or several (a goal at each end) — the one nearest the shot goes for it
+function keeperFor(tgt, idx){
+  const g=DRILL.gk; if(g==null) return -1; if(!Array.isArray(g)) return g;
+  let b=-1, bd=1e9; g.forEach(k=>{ const d=dist(W(PH[idx].pl[k]), tgt); if(d<bd){ bd=d; b=k; } }); return b;
+}
+function planShot(idx, ov){
+  const ph=PH[idx], p=ph.passer, tgt=W(ph.shot), S0=restSpot(pv(idx)), set=S0.ot || (DRILL.setUp && PH[pv(idx)].dribble);
+  if(ov){                                                                     // ph.onMove on a shot: struck in stride
+    const tKick=ov.tSet+K.STRIKE/ov.ks, tArr=tKick+Math.max(.25, dist(ov.A,tgt)/12), u=unit([tgt[0]-ov.A[0], tgt[1]-ov.A[1]]);
+    return { p, r:-1, A:ov.A, meet:tgt, rest:[tgt[0]+u[0]*.45, tgt[1]+u[1]*.45], yawK:ov.yawK, yawR:ov.yawK, kickPos:ov.B,
+             tSet:ov.tSet, tKick, tArr, tRest:tArr+CUSH, foot:ov.foot, kfoot:ov.foot, ot:false, inc:null, shot:true, onMove:true,
+             mB:[0,0,0], rB:[0,0,0], m2B:[0,0,0], gk:keeperFor(tgt, idx) };
+  }
+  // set: the ball is already where the strike wants it (a first-time finish, or a dribble's last touch)
+  const A = set ? S0.p : SC.ball.slice(), yaw=Math.atan2(tgt[0]-A[0], tgt[1]-A[1]);
+  const foot = set ? S0.foot : 1, yawK = set ? S0.yawK : yaw+OFF, s=Math.sin(yawK), c=Math.cos(yawK);
+  const kb=[foot ? K.KB[0] : -K.KB[0], K.KB[1]], kickPos = set ? S0.at : [A[0]-(c*kb[0]+s*kb[1]), A[1]-(-s*kb[0]+c*kb[1])];
+  const tSet = S0.ot ? OT_K-K.STRIKE : set ? .15 : .3, tKick=tSet+K.STRIKE, tArr=tKick+Math.max(.25, dist(A,tgt)/12);
+  const u=unit([tgt[0]-A[0], tgt[1]-A[1]]), rest=[tgt[0]+u[0]*.45, tgt[1]+u[1]*.45];
+  return { p, r:-1, A, meet:tgt, rest, yawK, yawR:yaw, kickPos, tSet, tKick, tArr, tRest:tArr+CUSH, foot, kfoot:foot,
+           ot:false, inc:null, shot:true, mB:[0,0,0], rB:[0,0,0], m2B:[0,0,0], gk:keeperFor(tgt, idx) };
+}
+// ph.onMove (a pass phase whose passer carries the ball first): [x, y] board point where it's struck,
+// or a fraction of the run (default .7). The passer runs with the ball from where they are, eases to
+// ~1 m/s for the plant, strikes in stride (a quicker swing, OM_KS) and runs on to ph.pl. The standing
+// foot is pinned to the grass through the strike. Which foot: whichever keeps the body nearest the run.
+const OM_KS = 1.6;
+function onMoveOv(idx, carry){
+  const prev=PH[pv(idx)], ph=PH[idx], h=prev.passer, role=DRILL.roles[h], pc=paceOf(ph, h);
+  // still running from the phase before (Auto moved on mid-run): carry straight on at that speed, no stop
+  const mv = carry ? carry.moves[h] : [], st = carry ? carry.starts[h] : W(prev.pl[h]), c=W(ph.pl[h]);
+  const Kp = Array.isArray(ph.onMove) ? W(ph.onMove) : lerp2(st, c, typeof ph.onMove==='number' ? ph.onMove : .7);
+  const vNow = mv.length ? speedToward(st, mv, Kp) : 0, flyIn = vNow>.5;
+  const a = flyIn || !mv.length ? st : mv[mv.length-1].to;
+  const d1=dist(a,Kp), d2=dist(Kp,c), v0 = flyIn ? Math.min(vNow, 2.4*d1/Math.max(.6, moveDur(d1, role, pc))) : 0;
+  const dur1=Math.max(.6, moveDur(d1, role, pc) - .3*Math.min(1, v0/2)), vs=clamp(.45*d1/dur1, 1.0, 1.4);
+  const dur2 = d2>.05 ? Math.max(.7, moveDur(d2, role, pc)+.2) : .5;
+  const tgt=ph.shot ? W(ph.shot) : restSpot(idx).p, pass=Math.atan2(tgt[0]-Kp[0], tgt[1]-Kp[1]), run=Math.atan2(Kp[0]-a[0], Kp[1]-a[1]);
+  const foot = Math.abs(wrap(pass+OFF-run)) <= Math.abs(wrap(pass-OFF-run)) ? 1 : 0, yawK=pass+(foot ? OFF : -OFF);
+  const s=Math.sin(yawK), co=Math.cos(yawK), toW=b=>[Kp[0]+co*b[0]+s*b[1], Kp[1]-s*b[0]+co*b[1]];
+  const kb=[foot ? K.KB[0] : -K.KB[0], K.KB[1]];
+  return { A:toW(kb), B:Kp, yawK, foot, ks:OM_KS, tSet:dur1-K.STRIKE/OM_KS, plantW:toW([foot ? -.14 : .14, .15]),
+           om:{ K:Kp, c, a, dur1, dur2, vs, v0, flyIn } };
+}
+// a run that starts already moving at v0: a little quicker than from a standstill (kept monotonic)
+const chainDur = (d, i, ph, v0)=>Math.min(2.6*d/v0, Math.max(.6, moveDur(d, DRILL.roles[i], paceOf(ph, i)) - .3*Math.min(1, v0/2)));
+// how fast a player on carried moves is travelling towards w right now (m/s, 0 if away)
+function speedToward(st, mv, w){
+  const p=posAt(st, mv, .03), u=unit([w[0]-st[0], w[1]-st[1]]);
+  return Math.max(0, ((p[0]-st[0])*u[0] + (p[1]-st[1])*u[1])/.03);
+}
+// a dribble cut short by Auto: the ball carries on to the touch it was heading for (prev-phase time d)
+function dribLead(D, d){
+  if(!D) return null;
+  const e=D.T.find(x=>x.t>d); return e ? { t:e.t-d, p:e.p.slice() } : null;
+}
+// the ball along an on-the-move run: a touch every ~1.5 m, the last one sets it on the strike spot A at tK
+function omTouches(i, st, mv, t0, tK, b0, A, lead){
+  const pos=t=>posAt(st, mv, t);
+  const fwd=t=>{ const a=pos(Math.max(t0, t-.06)), b=pos(t+.06), d=dist(a,b); return d>1e-3 ? [(b[0]-a[0])/d, (b[1]-a[1])/d] : null; };
+  // lead: still rolling to the next touch — keep its timing, but the touch is where the player now is
+  const lp = lead && lead.t<tK-.3 ? pos(lead.t) : null, lu = lp && (fwd(lead.t)||[0,1]);
+  // roll (DRILL.rollOn): still rolling and the strike comes before the next touch — it rolls straight on to the strike
+  const roll = !lp && lead && DRILL.rollOn;
+  const T = lp ? [{ t:0, p:b0 }, { t:lead.t, p:[lp[0]+lu[0]*.32, lp[1]+lu[1]*.32] }] : roll ? [{ t:0, p:b0 }] : [{ t:t0, p:b0 }, { t:t0+.18, p:b0 }];
+  const tS = roll ? tK : T[1].t;
+  let acc=0, q=pos(tS), lastU=fwd(tS+.12)||[0,1];
+  for(let t=tS+.02; t<tK-.45; t+=.02){
+    const p=pos(t); acc+=dist(p,q); q=p;
+    if(acc>=1.5){ const u=fwd(t)||lastU; lastU=u; T.push({ t, p:[p[0]+u[0]*.32, p[1]+u[1]*.32] }); acc=0; }
+  }
+  T.push({ t:tK, p:A.slice() });
+  return { i, T, end:A.slice(), yaw:null };
+}
+// inc: a first-time pass started while the previous ball is still rolling in — until the strike the
+// ball carries on along that pass, arriving exactly as it's struck.
+function ballAt(P, tt){
+  if(tt<P.tKick) return P.drib ? dribAt(P.drib, tt) : P.inc ?ballAt(P.inc.P, tt+P.inc.d) : P.A;
+  if(tt<P.tArr){ const x=(tt-P.tKick)/(P.tArr-P.tKick); return lerp2(P.A, P.meet, P.ot ? 1-Math.pow(1-x,1.5) : x*(1.3-.3*x)); }   // slows as it rolls
+  if(tt<P.tRest){ const x=(tt-P.tArr)/CUSH; return lerp2(P.meet, P.rest, 1-(1-x)*(1-x)); }         // cushioned
+  return P.rest;
+}
+
+// ── Movement: steady pace with ~0.7 s to get going and to pull up ──
+const MOVE_V = { att:3.0, def:3.3, gk:2.6 };
+// Runs beyond 9 m open up into a sprint (up to +2.5 m/s); passes beyond 14 m are driven harder.
+// DRILL.pace (default 1) scales everyday movement, e.g. 1.25 for sharp slides along a line.
+const paceOf = (ph, i)=>ph.pace && typeof ph.pace==='object' ? ph.pace[i] : ph.pace;   // ph.pace: a number, or { playerIndex: pace }
+const moveDur = (d, role, pace)=>Math.max(.7, d/Math.min(5.2, (MOVE_V[role]||3.0)*(pace||DRILL.pace||1) + Math.min(2.5, Math.max(0, d-9)*.18)) + .35);   // ≤ 5.2 m/s: the stride keeps up
+const ballSpeed = d=>(8.5 + Math.min(6, Math.max(0, d-14)*.4))*(DRILL.ballK||1);   // DRILL.ballK: a quicker (or slower) ball
+function profile(k, dur){
+  const p=Math.min(.45, .7/dur), v=1/(1-p);
+  return k<p ? v*k*k/(2*p) : k<1-p ? v*(k-p/2) : 1 - v*(1-k)*(1-k)/(2*p);
+}
+const bez2 = (a,c,b,k)=>[(1-k)*(1-k)*a[0]+2*k*(1-k)*c[0]+k*k*b[0], (1-k)*(1-k)*a[1]+2*k*(1-k)*c[1]+k*k*b[1]];
+// ph.via = { playerIndex:[x,y] board px }: the run passes through that point (e.g. outside a corner)
+// arc-length table, so a curved run keeps an even pace along its length
+const bezLut = (a,c,b)=>{ const L=[0]; let q=a; for(let s=1;s<=32;s++){ const r=bez2(a,c,b,s/32); L.push(L[s-1]+dist(q,r)); q=r; } return L; };
+const bezAt = (m,k)=>{ const L=m.lut||(m.lut=bezLut(m.from,m.c,m.to)), want=k*L[32];
+  let s=1; while(s<32 && L[s]<want) s++;
+  const t=(s-1+(L[s]>L[s-1] ? (want-L[s-1])/(L[s]-L[s-1]) : 0))/32; return bez2(m.from,m.c,m.to,clamp(t,0,1)); };
+const curve = (a, b, vb)=>{ if(!vb) return null; const v=W(vb), c=[2*v[0]-(a[0]+b[0])/2, 2*v[1]-(a[1]+b[1])/2]; return { c, len:bezLut(a,c,b)[32] }; };
+function posAt(start, moves, tt){
+  let p=start;
+  for(const m of moves){
+    if(tt<m.t0) break;
+    if(m.hv){                                         // m.hv: [v0, v1] m/s — a run that starts or ends at speed
+      const k=clamp((tt-m.t0)/m.dur, 0, 1), D=dist(m.from, m.to)||1, T=m.dur, k2=k*k, k3=k2*k;
+      p = lerp2(m.from, m.to, (D*(3*k2-2*k3) + T*m.hv[0]*(k3-2*k2+k) + T*m.hv[1]*(k3-k2))/D); continue;
+    }
+    const k=profile(clamp((tt-m.t0)/m.dur, 0, 1), m.dur);
+    p = m.c ? bezAt(m, k) : lerp2(m.from, m.to, k);   // m.c: curved run (round the outside of a box)
+  }
+  return p;
+}
+const CLR = .6;   // nobody's body within 0.6 m of the rolling ball (except passer at the kick and receiver)
+
+// Plan a phase: every player's moves (start delays picked so nobody walks through the pass) and the pass.
+// carry (optional): the previous phase still playing out — { d: seconds into it, P: its pass,
+// starts: where everyone is now, moves: their unfinished moves re-timed to this phase }. Players
+// finish those first, so the next pass can start without anyone stopping or jumping.
+function planPhase(idx, carry){
+  const prev=PH[pv(idx)], ph=PH[idx], from=prev.pl.map(W), to=ph.pl.map(W);
+  // ph.restart: the ball changes groups (e.g. the other grid starts) — no pass between them
+  const OV = ph.onMove && (ph.passer!==prev.passer || ph.shot) && !ph.restart ? onMoveOv(idx, carry) : null;   // ph.onMove: passed (or shot) on the run
+  const P = OV ? (ph.shot ? planShot(idx, OV) : planPass(idx, true, OV)) : ph.passer!==prev.passer && !ph.restart ? planPass(idx, !!carry || !!ph.intercept) :ph.shot ? planShot(idx) : null;
+  const starts = carry ? carry.starts : from;
+  const moves = from.map((_,i)=>carry ? carry.moves[i].slice() : []);
+  const busy = moves.map(mv=>mv.reduce((e,m)=>Math.max(e, m.t0+m.dur), 0));
+  const lastTo = i=>moves[i].length ? moves[i][moves[i].length-1].to : carry ? carry.starts[i] : from[i];   // where a carried run ends
+  // DRILL.chain: a run still going (Auto moved on mid-run) carries straight on into this one — no stop
+  const chainV = from.map((_,i)=>{
+    if(!DRILL.chain || !carry || (P && i===P.p) || moves[i].length!==1 || moves[i][0].t0>=0 || moves[i][0].c || (ph.via && ph.via[i]) || dist(starts[i], to[i])<=.3) return 0;
+    const vt=speedToward(starts[i], moves[i], to[i]); if(vt<=.5) return 0;
+    moves[i]=[]; busy[i]=0; return vt;
   });
-}
-
-// ── Render phase ─────────────────────────────────────────────────────
-let current=0, isAuto=false;
-let subTimer=null, autoTimer=null;
-const SUB_STEP_MS = 900;
-const SETTLE_MS   = 1600;
-const NORMAL_MS   = 2400;
-
-function clearTimers(){
-  if(subTimer){ clearTimeout(subTimer); subTimer=null; }
-  if(autoTimer){ clearTimeout(autoTimer); autoTimer=null; }
-}
-
-let flashHideTimer = null;
-function showFlash(text, intercept){
-  const f = document.getElementById('passFlash');
-  if(!text){ f.classList.remove('show'); return; }
-  f.textContent = text;
-  f.classList.toggle('intercept', !!intercept);
-  f.classList.add('show');
-  if(flashHideTimer) clearTimeout(flashHideTimer);
-  flashHideTimer = setTimeout(()=>{ f.classList.remove('show'); }, SUB_STEP_MS - 80);
-}
-function hideFlash(){
-  document.getElementById('passFlash').classList.remove('show');
-  if(flashHideTimer){ clearTimeout(flashHideTimer); flashHideTimer=null; }
-}
-
-function renderState(state, showGoal){
-  ['red','blue','green'].forEach(team=>{
-    els[team].forEach((el,i)=>{
-      el.style.left = state[team][i][0]+'px';
-      el.style.top  = state[team][i][1]+'px';
+  const shiftP = d=>{ P.tSet+=d; P.tKick+=d; P.tArr+=d; P.tRest+=d; if(P.drib) P.drib.T.forEach(e=>e.t+=d); };
+  if(P && !OV && carry && carry.P && restSpot(pv(idx)).ot){
+    const arr=carry.P.tArr-carry.d;                                           // previous ball arrives at the striker
+    if(arr>OT_K-.2){ P.inc={ P:carry.P, d:carry.d }; shiftP(arr-P.tKick); }
+  }
+  // ph.intercept: the receiver is a defender reading the pass — timed to step into the lane as the ball arrives
+  if(P && ph.intercept){ const r=P.r, need=busy[r] + moveDur(dist(lastTo(r), to[r]), DRILL.roles[r], paceOf(ph, r)) - P.tArr; if(need>0) shiftP(need); }
+  else if(P && P.r>=0 && !P.inc && (carry ? (!restSpot(pv(idx)).ot || busy[P.r]>0) : busy[P.r]>0)){   // the receiver is set before the ball arrives
+    const r=P.r, dR=dist(lastTo(r), to[r]);
+    const need=busy[r] + (dR>.02 ? (chainV[r] ? chainDur(dR, r, ph, chainV[r]) : moveDur(dR, DRILL.roles[r])) : 0) + .35 - P.tArr;
+    if(need>0) shiftP(need);
+  }
+  // the on-the-move pass: carry the ball along the run, strike it in stride, keep running after it
+  if(OV){
+    const h=P.p, O=OV.om;
+    if(O.flyIn){ moves[h]=[]; busy[h]=0; }                                   // (takes over the run in progress)
+    if(O.flyIn){                                                              // the run starts now: stretch it if the strike must wait
+      if(P.tKick>O.dur1) O.dur1=Math.min(P.tKick, 2.6*dist(O.a,O.K)/Math.max(O.v0,.1));
+      shiftP(O.dur1-P.tKick);
+    } else if(busy[h]>P.tKick-O.dur1) shiftP(busy[h]-(P.tKick-O.dur1));
+    const t0=P.tKick-O.dur1;
+    moves[h].push({ from:O.a, to:O.K, t0, dur:O.dur1, hv:[O.v0, O.vs], om:true },
+                  { from:O.K, to:O.c, t0:P.tKick, dur:O.dur2, hv:[O.vs, 0], om:true });
+    busy[h]=P.tKick+O.dur2;
+    P.drib=omTouches(h, starts[h], moves[h], t0, P.tKick, SC.ball.slice(), P.A, O.flyIn && carry ? dribLead(SC.drib, carry.d) : null);
+    P.om=O; P.ks=OV.ks; P.plantW=OV.plantW;
+  }
+  let end=Math.max(0, ...busy);
+  const minClear=(i, mv)=>{
+    if(!P) return 9;
+    let m=9;
+    for(let tt=P.inc ? 0 : P.tKick; tt<=P.tRest+.2; tt+=.025){
+      if(i===P.p && tt<P.tKick+.3) continue;
+      m=Math.min(m, dist(posAt(starts[i], mv, tt), ballAt(P, tt)));
+    }
+    return m;
+  };
+  let nDef=0;
+  from.forEach((_,i)=>{
+    let a=lastTo(i);
+    const b=to[i], def=isDef(i), kD = def ? nDef++ : 0;
+    if(OV && i===P.p) return;                                                 // (on-the-move pass: run planned above)
+    if(P && P.shot && i===P.gk){                                          // keeper: pushes off sideways into the dive as the shot is struck
+      const A=P.A, M=P.meet, k=Math.abs(M[1]-A[1])>.1 ? clamp((a[1]-A[1])/(M[1]-A[1]), 0, 1) : 1, xb=A[0]+(M[0]-A[0])*k;
+      const st=clamp(xb-a[0], -DRILL.gkPush||-.5, DRILL.gkPush||.5);
+      if(Math.abs(st)>.05){ moves[i].push({ from:a, to:[a[0]+st, a[1]], t0:Math.max(busy[i], P.tKick+DIVE.load), dur:.45 }); end=Math.max(end, P.tKick+.6); }
+      return;
+    }
+    if(P && i===P.p){                                                         // (already at the ball — no step-up)
+      if(dist(a,P.kickPos)>.02) moves[i].push({ from:a, to:P.kickPos, t0:busy[i], dur:Math.max(.2, P.tSet-busy[i]) });
+      a=P.kickPos;
+    }
+    const v0=chainV[i];
+    const d=dist(a,b);
+    if(d<.02){ end=Math.max(end, moves[i].length && P ? P.tSet : 0); return; }
+    const cv=curve(a, b, ph.via && ph.via[i]);
+    const dur = v0 ? chainDur(d, i, ph, v0)
+                   : moveDur(cv ? cv.len : d, DRILL.roles[i], paceOf(ph, i));                             // ph.pace: a phase of sprints
+    let base=0;
+    if(P){
+      base = i===P.p ? P.tSet+K.END-.1                                        // after the follow-through
+           : i===P.r ? (ph.intercept ? Math.max(0, P.tArr-dur) : 0)           // gets set early (an interceptor: just in time)
+           : def     ? P.tKick-.05+.09*kD                                     // defenders react to the strike
+           :           Math.max(0, P.tKick-.35)+.07*(i%6);                    // move as the ball travels
+    }
+    const go = !!(ph.go && ph.go[i]!=null);                                   // ph.go: { playerIndex: start } — an anticipated run, timed
+    base=Math.max(base, busy[i]);
+    let best=null, bestC=-1;
+    if(go) best=ph.go[i];
+    else if(v0) best=0;
+    else if(P && i!==P.r){
+      const cands=[]; for(let k=0;k<=24;k++) cands.push(base+k*.1);
+      if(i!==P.p) for(let k=1;k<=10;k++) if(base-k*.1>=busy[i]) cands.push(base-k*.1);   // the passer never sets off mid-kick
+      for(const t0 of cands){
+        const mv=[...moves[i], { from:a, to:b, t0, dur, c:cv&&cv.c }], c=minClear(i, mv);
+        if(c>=CLR){ best=t0; break; }
+        if(c>bestC){ bestC=c; best=t0; }
+      }
+    } else best=base;
+    moves[i].push(v0 ? { from:a, to:b, t0:0, dur, hv:[v0, 0] } : { from:a, to:b, t0:best, dur, c:cv&&cv.c, go });
+    end=Math.max(end, best+dur);
+  });
+  // DRILL.anticipate: the next receiver starts moving into their receiving spot as this pass is played,
+  // so the following pass can go straight off the first touch (they are not left waiting for the run)
+  const nx=PH[idx+1];
+  if(DRILL.anticipate && P && nx && nx.passer!==ph.passer){
+    const r2=nx.passer, a=lastTo(r2), b=W(nx.pl[r2]), d=dist(a,b);
+    if(d>.02){
+      const dur=moveDur(d, DRILL.roles[r2]), base=Math.max(moves[r2].reduce((e,m)=>Math.max(e, m.t0+m.dur), 0), P.tKick+.2);
+      let best=base, bestC=-1;
+      for(let k=0;k<=24;k++){
+        const t0=base+k*.1, c=minClear(r2, [...moves[r2], { from:a, to:b, t0, dur }]);
+        if(c>=CLR){ best=t0; break; }
+        if(c>bestC){ bestC=c; best=t0; }
+      }
+      moves[r2].push({ from:a, to:b, t0:best, dur, ant:true });
+    }
+  }
+  // nx.early (flowing drills): players listed on the NEXT phase start that phase's runs during this one,
+  // as this pass is struck (e.g. following a switch over to the other grid)
+  if(carry && nx && nx.early){
+    nx.early.forEach(i=>{
+      const a=lastTo(i), b=W(nx.pl[i]), d=dist(a,b);
+      if(d<.02) return;
+      const cv=curve(a, b, nx.via && nx.via[i]);
+      const dur=moveDur(cv ? cv.len : d, DRILL.roles[i], paceOf(nx, i)), base=Math.max(moves[i].reduce((e,m)=>Math.max(e, m.t0+m.dur), 0), P ? (i===P.p ? P.tKick+.3 : P.tKick+.1) : 0);   // pass and move: the passer is off as the strike finishes
+      let best=base, bestC=-1;
+      for(let k=0;k<=24;k++){
+        const t0=base+k*.1, c=minClear(i, [...moves[i], { from:a, to:b, t0, dur, c:cv&&cv.c }]);
+        if(c>=CLR){ best=t0; break; }
+        if(c>bestC){ bestC=c; best=t0; }
+      }
+      moves[i].push({ from:a, to:b, t0:best, dur, c:cv&&cv.c, early:true });
     });
-  });
-  els.ball.style.left = state.ball[0]+'px';
-  els.ball.style.top  = state.ball[1]+'px';
-
-  document.getElementById('goalFlash').classList.toggle('show', !!showGoal);
-  document.getElementById('goalText').classList.toggle('show', !!showGoal);
-
-  renderArrows(state.arrows || []);
+  }
+  // ph.inStride: the pass is played into the receiver's path — aimed at where the run will have taken
+  // them when it gets there, just ahead of the feet, so they meet it at full stride (no stopping, no cushion)
+  if(P && ph.inStride && P.r>=0){
+    const r=P.r, at=t=>posAt(starts[r], moves[r], t);
+    let tA=P.tArr;
+    for(let k=0;k<8;k++){
+      const p=at(tA), q2=at(tA+.06), d=dist(p,q2), u = d>1e-3 ? [(q2[0]-p[0])/d, (q2[1]-p[1])/d] : unit([p[0]-P.A[0], p[1]-P.A[1]]);
+      const m=[p[0]+u[0]*.3, p[1]+u[1]*.3], L=dist(P.A, m);
+      P.meet=m; P.rest=m.slice(); tA=P.tKick+Math.max(.4, L/ballSpeed(L));
+    }
+    P.tArr=tA; P.tRest=tA; P.ot=true; P.inStride=true;
+  }
+  if(P) end=Math.max(end, P.tRest+.4);
+  // ph.lead: seconds of stillness before this phase's play starts (e.g. while the camera moves in)
+  if(ph.lead){
+    if(P) shiftP(ph.lead);
+    moves.forEach((mv,i)=>mv.forEach((m,k)=>{ if((!carry || k>=carry.moves[i].length || m.om) && !m.go) m.t0+=ph.lead; }));
+    end+=ph.lead;
+  }
+  return { from, starts, moves, P, end };
 }
 
-function applyPhase(idx){
-  clearTimers();
-  hideFlash();
-  const ph = phases[idx];
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  DRAWING — every part is a stroked/filled path, depth-sorted     ║
+// ╚══════════════════════════════════════════════════════════════════╝
+function segItem(a, b, wM, color, bias){
+  const A=project(cam,a), P=project(cam,b);
+  if(A[2]<.6 || P[2]<.6) return null;
+  const z=(A[2]+P[2])/2;
+  return { z:z+(bias||0), d:`M${A[0].toFixed(1)} ${A[1].toFixed(1)}L${P[0].toFixed(1)} ${P[1].toFixed(1)}`,
+           stroke:color, w:(wM*cam.f/z).toFixed(2) };
+}
+function dotItem(c, rM, color, bias){
+  const C=project(cam,c);
+  if(C[2]<.6) return null;
+  return { z:C[2]+(bias||0), raw:C[2], d:`M${C[0].toFixed(1)} ${C[1].toFixed(1)}h.01`,
+           stroke:color, w:(2*rM*cam.f/C[2]).toFixed(2) };
+}
+function polyD(pts){ return 'M'+pts.map(p=>{ const s=project(cam,p); return s[0].toFixed(1)+' '+s[1].toFixed(1); }).join('L')+'Z'; }
+function lineD(a, b){ const s=project(cam,a), e=project(cam,b); return `M${s[0].toFixed(1)} ${s[1].toFixed(1)}L${e[0].toFixed(1)} ${e[1].toFixed(1)}`; }
+const quad = (x0,z0,x1,z1)=>[[x0,.005,z0],[x1,.005,z0],[x1,.005,z1],[x0,.005,z1]];
+function coneItem(x, z){
+  const P=[[x-.13,0,z],[x+.13,0,z],[x,.3,z]].map(p=>project(cam,p));
+  return { z:(P[0][2]+P[1][2])/2, fill:'#f28c1a', d:'M'+P.map(p=>p[0].toFixed(1)+' '+p[1].toFixed(1)).join('L')+'Z' };
+}
 
-  document.getElementById('phaseLabel').textContent = ph.label;
-  document.getElementById('desc').textContent = ph.desc;
+// f.op (optional, 0–1): faded figure, e.g. players in a grid that's not in play
+function figureItems(f, items){
+  const J=fkF(f), s=Math.sin(f.yaw), c=Math.cos(f.yaw), tc=TEAM[f.team]||f.team;
+  const Wd = b=>worldOf(f, b), op=f.op==null || f.op>.99 ? null : +f.op.toFixed(2);
+  const push = it=>{ if(it){ if(op!=null) it.op=op; items.push(it); } };
+  [0,1].forEach(i=>{
+    const hip=Wd(J['hip'+i]), knee=Wd(J['knee'+i]), ank=Wd(J['ank'+i]), toe=Wd(J['toe'+i]);
+    const midT=lerp3(hip,knee,.45), sockTop=lerp3(knee,ank,.4), waist=add3(hip,[0,.03,0]);
+    push(segItem(midT, knee, .13, SKIN));
+    push(segItem(waist, midT, .19, SHORTS, .04));
+    push(segItem(knee, sockTop, .115, SKIN));
+    push(segItem(sockTop, ank, .12, tc));
+    push(segItem(ank, toe, .105, BOOT));
+  });
+  push(segItem(add3(Wd(J.hip0),[0,.03,0]), add3(Wd(J.hip1),[0,.03,0]), .22, SHORTS, .04));
+  // Torso reads wide from the front/back, narrow side-on
+  const vx=f.x-cam.pos[0], vz=f.z-cam.pos[2], vn=Math.hypot(vx,vz)||1;
+  const facing=Math.abs((vx*s+vz*c)/vn);
+  push(segItem(Wd(J.base), Wd(J.neck), .22+.14*facing, tc, .02));
+  [0,1].forEach(i=>{
+    const sh=Wd(J['sh'+i]), el=Wd(J['el'+i]), ha=Wd(J['hand'+i]), sl=lerp3(sh,el,.55);
+    push(segItem(sl, el, .085, SKIN));
+    push(segItem(sh, sl, .105, tc, -.001));
+    push(segItem(el, ha, .08, SKIN));
+  });
+  const H=Wd(J.head);
+  push(segItem(Wd(J.neck), H, .09, SKIN, .01));
+  // Head: hair at the back, eyes at the front — together they show where the head faces
+  const hy=f.yaw+f.headTurn, hs=Math.sin(hy), hc=Math.cos(hy);
+  const head=dotItem(H, .12, SKIN, -.01);
+  push(head);
+  push(dotItem([H[0]-hs*.04, H[1]+.035, H[2]-hc*.04], .112, HAIR, -.005));
+  [-1,1].forEach(k=>{
+    const eye=dotItem([H[0]+hs*.1+hc*k*.045, H[1]+.01, H[2]+hc*.1-hs*k*.045], .022, '#111', -.03);
+    if(eye && head && eye.raw < head.raw) push(eye);
+  });
+}
+
+function makePool(id, n){
+  const g=document.getElementById(id), pool=[];
+  for(let i=0;i<n;i++){ const el=document.createElementNS(SVGNS,'path'); g.appendChild(el); pool.push(el); }
+  return pool;
+}
+function drawItems(pool, items){
+  items.sort((a,b)=>b.z-a.z);
+  for(let i=0;i<pool.length;i++){
+    const el=pool[i], it=items[i];
+    if(!it){ if(el._on){ el.setAttribute('d',''); el._on=false; } continue; }
+    el._on=true;
+    el.setAttribute('d', it.d);
+    el.setAttribute('stroke', it.stroke||'none');
+    el.setAttribute('stroke-width', it.w||0);
+    el.setAttribute('fill', it.fill||'none');
+    const op=it.op==null ? 1 : it.op;
+    if(el._op!==op){ el.setAttribute('opacity', op); el._op=op; }
+  }
+}
+function makeShadows(id, n){
+  const g=document.getElementById(id), out=[];
+  for(let i=0;i<n;i++){
+    const el=document.createElementNS(SVGNS,'ellipse');
+    el.setAttribute('fill','rgba(0,0,0,0.38)');
+    g.appendChild(el); out.push(el);
+  }
+  return out;
+}
+function placeShadow(el, x, z, rM, lift){
+  const C=project(cam,[x,0,z]);
+  const rx=rM*cam.f/C[2]*(1+lift*.6);
+  el.setAttribute('cx',C[0].toFixed(1)); el.setAttribute('cy',C[1].toFixed(1));
+  el.setAttribute('rx',rx.toFixed(1));   el.setAttribute('ry',(rx*(Math.sin(cam.pitch)+.15)).toFixed(1));
+  el.setAttribute('opacity', (1-Math.min(.7, lift*2)).toFixed(2));
+}
+
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  SCENE — players, ball and timeline                              ║
+// ╚══════════════════════════════════════════════════════════════════╝
+// SC.ev: timed callbacks [{at, fn}] in absolute seconds (board updates when a pass lands, etc.)
+const SC = { t0:0, P:null, prevP:null, prevD:0, end:0, holder:0, holdYaw:0, rest:[0,0], ev:[], ball:[0,0], roll:0, rollDir:[0,1] };
+let figs = [];
+function makeFigs(){
+  figs = PH[0].pl.map((p,i)=>{
+    const w=W(p);
+    return { team:DRILL.teams[i], role:DRILL.roles[i], x:w[0], z:w[1], yaw:0, headTurn:0, neck:.2, gait:Math.random(),
+             cad:.94+.12*Math.random(), ph:i*1.37, vx:0, vz:0, q:null, lift:0, start:w, moves:[] };
+  });
+  return figs;
+}
+
+// Facing: everyone's body is open to the ball and the grid; defenders square up to the ball
+function faceYaw(f, i, tt){
+  const P=SC.P, b=SC.ball, ang=p=>Math.atan2(p[0]-f.x, p[1]-f.z);
+  if(P && i===P.p && tt<P.tKick+.35) return P.yawK;          // opened up to the target for the pass
+  if(P && i===P.r && tt<P.tRest+.5)  return P.yawR;          // body shape set before the ball arrives
+  // SC.feint (ph.feint, opt-in): just after the control the holder sells a pass that way, then opens back up
+  if(i===SC.holder && SC.feint && P && i===P.r && tt>P.tRest+.5 && tt<P.tRest+1.05) return ang(SC.feint);
+  if(i===SC.holder) return SC.holdYaw;                       // on the ball: stays open to the next pass
+  if(f.role==='att') return ang(lerp2(b, SC.centre||[0,0], .4));
+  return ang(b);
+}
+function snapFig(f, i){
+  f.vx=f.vz=0; f.moves=[]; f.start=[f.x,f.z];
+  f.yaw=faceYaw(f, i, 99); f.headTurn=0;
+  f.neck=.25; f.q=gaitQ(f, 0, 1, 0, 0, 0);
+}
+
+function updateFig(f, i, tt, t, dt){
+  const p=posAt(f.start, f.moves, tt), vx=(p[0]-f.x)/dt, vz=(p[1]-f.z)/dt;
+  f.x=p[0]; f.z=p[1];
+  const k=Math.min(1, dt*12); f.vx=mix(f.vx, vx, k); f.vz=mix(f.vz, vz, k);
+  const sp=Math.hypot(f.vx, f.vz);
+  // Facing — on a longer, quicker move the hips open towards the run while the eyes stay on the ball
+  let ty=faceYaw(f, i, tt);
+  const omP = SC.P && SC.P.onMove && i===SC.P.p;                             // on-the-move pass: opens up just before the strike
+  if(SC.drib && i===SC.drib.i && sp>.4 && !(omP && tt>SC.P.tSet-.2)) ty=Math.atan2(f.vx, f.vz);       // dribbling: faces the run
+  if((DRILL.setUp && SC.drib) || f.armK!=null){ const ak = DRILL.setUp && SC.drib && i===SC.drib.i && !(omP && tt>SC.P.tKick) ? .45 : 1; f.armK = mix(f.armK==null ? 1 : f.armK, ak, Math.min(1, dt*4)); }
+  if(sp>1.6) ty += .4*sstep(1.6,2.8,sp)*wrap(Math.atan2(f.vx,f.vz)-ty);
+  const P=SC.P, kicking = P && i===P.p && tt<P.tKick+.35;
+  f.yaw += wrap(ty-f.yaw)*Math.min(1, dt*(kicking ? 10 : f.role==='att' ? 6 : 7));
+  if(P && P.shot && i===P.gk && tt>P.tKick && tt<P.tKick+2.0){ if(P.gkYaw==null) P.gkYaw=f.yaw; f.yaw=P.gkYaw; }   // square on through the dive
+  // Head and eyes: on the ball; the player on the ball scans the grid, glancing down at it now and then
+  const b=SC.ball, db=Math.hypot(b[0]-f.x, b[1]-f.z), resting = i===SC.holder && !(P && tt<P.tRest+.5);
+  let ht = resting ? .75*Math.sin(t*1.5+f.ph) : clamp(wrap(Math.atan2(b[0]-f.x, b[1]-f.z)-f.yaw), -1.35, 1.35);
+  let nt = resting ? .28+.2*Math.max(0, Math.sin(t*2.6+f.ph)) : clamp(Math.atan2(1.5, db)-.12, .05, .55);
+  // SC.look (opt-in): 'down' = head bowed, eyes on the ball the whole time; 'scan' = checks both shoulders before it arrives
+  const lk = SC.look && P && i===P.r ? SC.look : null;
+  if(lk==='down'){ ht=clamp(wrap(Math.atan2(b[0]-f.x, b[1]-f.z)-f.yaw), -1.35, 1.35); nt=.9; }
+  else if(lk==='scan' && tt<P.tArr-.3){ const u=clamp(tt/(P.tArr-.3), 0, 1); ht=1.25*Math.sin(2*Math.PI*u); nt=.1; }
+  f.headTurn += (ht-f.headTurn)*Math.min(1, dt*(lk==='scan' ? 10 : 8));
+  f.neck += (nt-f.neck)*Math.min(1, dt*6);
+  // Travel direction in the body frame → gait
+  const s=Math.sin(f.yaw), c=Math.cos(f.yaw), n=sp||1;
+  let q=gaitQ(f, (f.vx*c - f.vz*s)/n, (f.vx*s + f.vz*c)/n, sp, dt, t);
+  // First touch still finishing from the phase before (the next pass started straight after it)
+  const pp=SC.prevP;
+  if(pp && i===pp.r && !pp.ot){
+    const v=tt+SC.prevD-pp.tArr;
+    if(v<.65) q=mixQ(q, recvQ(pp, v), 1-sstep(.5,.62,v));
+  }
+  // Kick / first touch, blended in and out
+  if(P && i===P.p){
+    const u=(tt-P.tSet)*(P.ks||1);                                           // P.ks: a quicker swing on the move
+    if(u>-.05 && u<K.END){
+      const w=sstep(0,.1,u)*(1-sstep(K.END-.12,K.END,u)), pw=P.plantW, dx=pw ? pw[0]-f.x : 0, dz=pw ? pw[1]-f.z : 0;
+      q=mixQ(q, kickQ(u, P.kfoot, pw ? [dx*c-dz*s, dx*s+dz*c] : null), w);
+    }
+  }
+  f.dive=null;
+  if(P && P.shot && i===P.gk){                                            // the keeper dives for it
+    const u=tt-P.tKick;
+    if(u>0 && u<2.2){
+      if(!P.gkS) P.gkS=Math.sign(bodyOf([f.x,f.z], f.yaw, P.meet)[0])||1;    // side fixed at the strike
+      q=mixQ(q, diveQ(u, P.gkS), sstep(0,.08,u)*(1-sstep(2.0,2.2,u)));
+      f.dive={ s:P.gkS, a:diveRoll(u) };
+    }
+  }
+  if(P && i===P.r && !P.ot){
+    const v=tt-P.tArr;
+    if(v>-.6 && v<.65){ const w=sstep(-.55,-.45,v)*(1-sstep(.5,.62,v)); q=mixQ(q, recvQ(P, v), w); }
+  }
+  f.q=q; f.lift=q[0];
+}
+
+// Start a phase. snap: jump straight to the board (Back, Setup). Otherwise plan the pass and the
+// moves; with DRILL.flow the phase carries on from wherever everyone is (runs still in progress are
+// finished, not restarted, and a first-time pass meets the ball still rolling in).
+// Returns the plan (null on a snap).
+// ph.dribble: the holder runs with the ball. The first touch takes it from where it lies; then a touch
+// every ~1.5 m pushes it just ahead and the player runs onto it; the last touch lets it roll to a stop
+// in front, on the line of the run.
+function buildDrib(idx, plan){
+  const i=PH[idx].passer, mv=plan.moves[i], st=plan.starts[i];
+  if(!mv.length) return null;
+  const t0=Math.max(0, mv[0].t0), t1=mv[mv.length-1].t0+mv[mv.length-1].dur;
+  const pos=t=>posAt(st, mv, t);
+  const fwd=t=>{ const a=pos(Math.max(t0, t-.06)), b=pos(Math.min(t1, t+.06)), d=dist(a,b); return d>1e-3 ? [(b[0]-a[0])/d, (b[1]-a[1])/d] : null; };
+  const b0=SC.ball.slice(), T=[{ t:t0, p:b0 }, { t:t0+.18, p:b0 }];
+  // ph.touches===1 straight after a ball received in stride: the receiving touch IS the touch — it
+  // goes from the foot at once (t 0) and the next contact is the last one, setting the next ball
+  const one = PH[idx].touches===1 && PH[idx-1] && PH[idx-1].inStride;
+  if(one){ T.length=0; T.push({ t:0, p:b0 }); }
+  let acc=0, q=pos(t0+.18), lastU=fwd(t0+.3)||[0,1];
+  for(let t=t0+.2; !one && t<t1-.35; t+=.02){
+    const p=pos(t); acc+=dist(p,q); q=p;
+    if(acc>=1.5){ const u=fwd(t)||lastU; lastU=u; T.push({ t, p:[p[0]+u[0]*.32, p[1]+u[1]*.32] }); acc=0; }
+  }
+  // DRILL.setUp: when the ball is played next, the last touch sets it in the kicking spot, body open to the pass
+  const nx=PH[idx+1], sets = DRILL.setUp && nx && !nx.onMove && (nx.passer!==i || nx.shot), R = sets ? restSpot(idx) : null;
+  const pe=pos(t1); T.push({ t:t1, p: R ? R.p.slice() : [pe[0]+lastU[0]*.45, pe[1]+lastU[1]*.45] });
+  return { i, T, end:T[T.length-1].p, yaw: R ? R.yawH : Math.atan2(lastU[0], lastU[1]) };
+}
+function dribAt(D, tt){
+  const T=D.T;
+  if(tt<=T[0].t) return T[0].p;
+  for(let k=1;k<T.length;k++) if(tt<T[k].t){
+    const x=(tt-T[k-1].t)/Math.max(1e-3, T[k].t-T[k-1].t);
+    return lerp2(T[k-1].p, T[k].p, 1-(1-x)*(1-x));                     // quick off the foot, slowing
+  }
+  return D.end;
+}
+function scenePhase(idx, t, snap){
+  const ph=PH[idx];
+  SC.centre=centreOf(idx);
+  SC.look = ph.look || null;                                  // ph.look: the receiver's head as the ball comes ('down' | 'scan')
+  SC.feint = ph.feint ? W(ph.feint) : null;                  // ph.feint: the body fakes a pass towards that point after the control
+  if(snap || idx===0){
+    figs.forEach((f,i)=>{ const w=W(ph.pl[i]); f.x=w[0]; f.z=w[1]; });
+    SC.P=null; SC.prevP=null; SC.holder=ph.passer; SC.holdYaw=restSpot(idx).yawH; SC.rest=restSpot(idx).p; SC.ball=SC.rest.slice(); SC.drib=null;
+    figs.forEach(snapFig);
+    SC.t0=t; SC.end=0; SC.ev=[];
+    return null;
+  }
+  const d=t-SC.t0;
+  const carry = DRILL.flow ? { d, P:SC.P,
+    starts: figs.map(f=>posAt(f.start, f.moves, d)),
+    moves:  figs.map(f=>f.moves.filter(m=>m.t0+m.dur>d).map(m=>Object.assign({}, m, { t0:m.t0-d }))) } : null;
+  if(!carry) SC.ev=[];
+  const plan=planPhase(idx, carry);
+  figs.forEach((f,i)=>{ f.start=plan.starts[i]; f.moves=plan.moves[i]; const p=posAt(f.start, f.moves, 0); f.x=p[0]; f.z=p[1]; });
+  SC.prevP = carry ? SC.P : null; SC.prevD=d;
+  SC.P=plan.P; SC.holder=ph.passer; SC.holdYaw=restSpot(idx).yawH; SC.rest=restSpot(idx).p;
+  SC.drib = ph.dribble && !plan.P ? buildDrib(idx, plan) : null;
+  if(SC.drib){ SC.rest=SC.drib.end; SC.holdYaw=SC.drib.yaw; }
+  if(plan.P && plan.P.drib) SC.drib=plan.P.drib;                             // (carrying it into an on-the-move pass)
+  SC.t0=t; SC.end=plan.end;
+  return plan;
+}
+// Seconds after the phase start that Auto may play the next pass in a flowing drill:
+// straight off the first touch, or timed so a first-time strike meets the ball as it arrives.
+// A phase with runs but no pass doesn't wait for long runs to finish — they carry on into the next pass.
+function flowNext(idx, plan){
+  if(!plan) return 0;
+  if(!plan.P) return PH[idx].hold!=null ? PH[idx].hold : Math.min(plan.end, 2);   // ph.hold overrides
+  return restSpot(idx).ot && idx<PH.length-1 ? plan.P.tArr-OT_K : plan.P.tRest+.05;
+}
+function sceneUpdate(t, dt){
+  const tt=t-SC.t0, P=SC.P;
+  const nb = P ? ballAt(P, tt) : SC.drib ? dribAt(SC.drib, tt) : SC.rest, d=dist(nb, SC.ball);
+  if(d>1e-4){ SC.rollDir=unit([nb[0]-SC.ball[0], nb[1]-SC.ball[1]]); SC.roll += d/BR; }
+  SC.ball=nb.slice();
+  figs.forEach((f,i)=>updateFig(f, i, tt, t, dt));
+  while(SC.ev.length && t>=SC.ev[0].at){ SC.ev.shift().fn(); }
+}
+// Players (with shadows) and the ball, into the depth-sorted item list
+function peopleItems(items, shadows){
+  figs.forEach((f,i)=>{ figureItems(f, items); placeShadow(shadows[i], f.x, f.z, .36, f.lift); });
+  const b=[SC.ball[0], BR, SC.ball[1]], u=SC.rollDir, r=SC.roll;
+  placeShadow(shadows[figs.length], b[0]+.04, b[2]+.04, .13, 0);
+  const o=dotItem(b, .13, '#1b1b1b', .002), w=dotItem(b, .115, '#f4f4f4');
+  if(o) items.push(o); if(w) items.push(w);
+  // dark patch turning as it rolls
+  const pt=[b[0]+u[0]*.07*Math.sin(r), b[1]+.07*Math.cos(r), b[2]+u[1]*.07*Math.sin(r)];
+  if(toCam(cam,pt)[2] < toCam(cam,b)[2]){ const pi=dotItem(pt, .035, '#3a3a3a', -.003); if(pi) items.push(pi); }
+}
+
+/*@@ENGINE-END*/
+/*@@CORE*/
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  DRILL — 6v3 Rondo with Transition                               ║
+// ╚══════════════════════════════════════════════════════════════════╝
+// Three zones end to end (16 m wide, 13 m long each): Red top with the top goal, Blue in the middle,
+// Orange bottom with the bottom goal. Neutral keepers in both goals; the coach feeds every ball from
+// the right touchline. Red keep it 6v3 for 7 passes and finish; the coach switches to Orange, Blue
+// win it and score; then the full rotation and the coach restarts into Red.
+// Coordinates are world metres: x across (−8 … 8), z up the pitch (−19.5 bottom line … 19.5 top line).
+const W = p=>[p[0], p[1]], WB = w=>[w[0], w[1]];
+const HW = 8, ZL = 6.5, END = 19.5;
+const GOALS = [ { x:0, z:END, w:4.9, h:2.0, d:1.4, s:1 }, { x:0, z:-END, w:4.9, h:2.0, d:1.4, s:-1 } ];
+
+// Camera: an aerial view of all three zones for the setup and the rotation; otherwise framed on the
+// zone in play, following the ball up and down the pitch.
+const CAM_AIR  = { pos:[0,62,-18], look:[0,0,.3], f:540, cy:208 };
+const CAM_ZONE = { y:22, back:20, f:460, cy:205 };
+const cam = lookCam(CAM_AIR);
+
+// Shapes — index order inside each team: 0 1 2 = the row nearer the top, 3 4 5 the row nearer the bottom
+const R_SET = [[-4.5,15.2],[0,15.2],[4.5,15.2],[-4.5,9],[0,9],[4.5,9]];
+const B_SET = [[-4.5,3.9],[0,3.9],[4.5,3.9],[-4.5,-3.1],[0,-3.1],[4.5,-3.1]];
+const G_SET = [[-4.5,-8.6],[0,-8.6],[4.5,-8.6],[-4.5,-15.2],[0,-15.2],[4.5,-15.2]];
+// In possession: six round the edge of the zone
+const R_PLAY = [[-6,15],[0,16.5],[6,15.5],[-6,9.5],[0,7.5],[6,9.5]];
+const G_PLAY = [[-6,-9.5],[0,-7.5],[6,-9.5],[-6,-15],[0,-16.5],[6,-15.5]];
+const B_MID = [[-4.5,0],[0,0],[4.5,0]], B_HOLD = [[-4.5,-2],[0,-2],[4.5,-2]];
+// Blue as the new attackers after the rotation; the Oranges' new spots (3 defending Red, 3 in the middle)
+const B_ATT = [[-6.2,-12],[2.4,-9],[6.2,-12],[-2.4,-9],[-2.4,-15.6],[2.4,-15.6]];
+const G_ROT = [[-2.2,11.8],[.5,13.2],[2.6,11.0],[-4.5,-1],[-1,-1],[4.5,-1]];
+// Rotation lanes: the middle Blues drop down the touchlines, the Oranges come up the inside channels
+const ROT_VIA = { 6:[-7.2,-4], 8:[7.2,-4], 13:[-2.25,8], 15:[-4,-9], 17:[4,-9] };
+const COACH = [10.2, 0];
+
+// Actors: Red 0–5, Blue 6–11, Orange 12–17, top GK 18, bottom GK 19, coach 20.
+// holder: who has the ball at the end of the phase (a change of holder is a pass).
+const RD=k=>k, BL=k=>6+k, GR=k=>12+k, CO=20;
+const set = (a, k, p)=>{ const c=a.map(x=>x.slice()); c[k]=p; return c; };
+function mk(o){
+  const r=o.r, b=o.b, g=o.g, hp = o.holder===CO ? COACH : [...r, ...b, ...g][o.holder];
+  // keepers: shift a little across with the ball when it's in their zone
+  const gt=[hp[1]>ZL ? clamp(hp[0]*.18, -1, 1) : 0, END-.9], gb=[hp[1]<-ZL ? clamp(hp[0]*.18, -1, 1) : 0, -END+.9];
+  return Object.assign(o, { pl:[...r, ...b, ...g, gt, gb, COACH], passer:o.holder });
+}
+const RB = (b3)=>[...b3, ...B_HOLD];          // Blues 0–2 pressing in the Red zone, 3–5 holding the middle
+const GB = (b3)=>[...B_MID, ...b3];           // Blues 0–2 back in the middle, 3–5 pressing in the Orange zone
+
+const PH = [
+{ label:"Set Up", air:true, score:0, holder:CO,
+  r:R_SET, b:B_SET, g:G_SET,
+  desc:"Three teams of 6. Reds in the top zone, Blues in the middle, Oranges in the bottom zone. Neutral keepers in both goals; the coach has the ball on the side." },
+
+{ label:"Coach Plays Into Red", score:0, holder:RD(5), lead:.7, via:{ 6:[-5.0,6.4], 7:[-2.6,7.0] },
+  r:R_PLAY, b:RB([[-2.5,10.5],[0.5,12.8],[3.8,10]]), g:G_SET,
+  desc:"The coach plays into Red. At the same moment 3 Blues push up out of the middle to press in the Red zone; the other 3 hold the middle." },
+
+{ label:"Red Pass 1", score:1, holder:RD(4),
+  r:set(R_PLAY, 4, [.3,7.4]), b:RB([[-2.3,10.3],[1.0,12],[2.0,8.9]]), g:G_SET,
+  desc:"6v3 in the Red zone. Keep it moving — the nearest Blue presses, the other two cut the lanes." },
+
+{ label:"Red Pass 2", score:2, holder:RD(3),
+  r:set(R_PLAY, 3, [-6,9.6]), b:RB([[-4.0,10.4],[-1.2,12.3],[-.6,9.2]]), g:G_SET,
+  desc:"Across the bottom of the zone. The Blues shift together toward the ball." },
+
+{ label:"Red Pass 3", score:3, holder:RD(0),
+  r:set(R_PLAY, 0, [-6.2,15]), b:RB([[-4.4,13.2],[-2.0,13.0],[-1.8,10.5]]), g:G_SET,
+  desc:"Up the left side. All three Blues are dragged over — the far side is open." },
+
+{ label:"Red Pass 4", score:4, holder:RD(2),
+  r:set(R_PLAY, 2, [6.2,15.4]), b:RB([[-2.5,14.3],[2.5,14.0],[1.0,11.5]]), g:G_SET,
+  desc:"Switch it across the top to the free side before the Blues can close it down." },
+
+{ label:"Red Pass 5", score:5, holder:RD(5),
+  r:set(R_PLAY, 5, [6.2,9.4]), b:RB([[.5,12.2],[4.5,13.8],[4.3,8.6]]), g:G_SET,
+  desc:"Down the right side. Two Blues press the ball — a gap opens between them." },
+
+{ label:"Red Pass 6 — Split", score:6, holder:RD(1), splitP:true,
+  r:R_PLAY, b:RB([[-.5,14.2],[2.8,15.3],[4.6,10.2]]), g:G_SET,
+  desc:"Split them: straight through the middle of the three Blues to the top of the zone." },
+
+{ label:"Red Pass 7", score:7, holder:RD(0),
+  r:R_PLAY, b:RB([[-3.8,14.2],[1.5,15.6],[2.5,11.5]]), g:G_SET,
+  desc:"Seven passes. The last one goes out to the left, facing the goal." },
+
+{ label:"Red Score!", score:7, holder:RD(0), shot:[2.2, END+.3],
+  r:R_PLAY, b:RB([[-4.6,14.6],[.8,14.4],[.5,11.8]]), g:G_SET,
+  desc:"7 passes kept under pressure — now finish. Struck across the keeper into the far corner of the top goal." },
+
+{ label:"Switch To Orange", air:true, score:0, holder:CO, restart:true, netBall:true, hold:1.3, via:{ 6:[-6.6,9], 7:[-2.25,8], 8:[2.25,8], 9:[-5.0,-6.4], 10:[-2.6,-7.0] },
+  r:R_SET, b:GB([[-2.5,-10.5],[.5,-12.8],[3.8,-10]]), g:G_PLAY,
+  desc:"The coach has a new ball for Orange. The 3 Blues from the middle push down to press in the Orange zone; the 3 who defended Red drop back into the middle." },
+
+{ label:"Coach Plays Into Orange", score:0, holder:GR(2), lead:.7,
+  r:R_SET, b:GB([[-2.5,-10.5],[.5,-12.8],[3.8,-10]]), g:G_PLAY,
+  desc:"The coach plays into Orange. Same game: keep it 6v3 for 7 passes, then score on the bottom goal." },
+
+{ label:"Orange Pass 1", score:1, holder:GR(1),
+  r:R_SET, b:GB([[-2.3,-10.3],[1.0,-12],[2.0,-8.9]]), g:set(G_PLAY, 1, [.3,-7.4]),
+  desc:"The nearest Blue presses, the other two cut the lanes." },
+
+{ label:"Orange Pass 2", score:2, holder:GR(0),
+  r:R_SET, b:GB([[-4.0,-10.4],[-1.2,-12.3],[-.6,-9.2]]), g:set(G_PLAY, 0, [-6,-9.6]),
+  desc:"Across the top of the Orange zone. The Blues shift with the ball." },
+
+{ label:"Orange Pass 3", score:3, holder:GR(3),
+  r:R_SET, b:GB([[-4.4,-13.2],[-2.0,-13.0],[-1.8,-10.5]]), g:set(G_PLAY, 3, [-6.2,-15]),
+  desc:"Down the left side. Four passes — but the Blues are reading it now." },
+
+{ label:"Orange Pass 4", score:4, holder:GR(4),
+  r:R_SET, b:GB([[-3.3,-13.6],[-.6,-13.8],[1.8,-12.8]]), g:G_PLAY,
+  desc:"Into the middle of the back line. One Blue presses, one sits in the lane to the right." },
+
+{ label:"Blue Win It!", score:4, holder:BL(5), intercept:true,
+  r:R_SET, b:GB([[-1.8,-15.0],[.2,-14.8],[3,-16.0]]), g:G_PLAY,
+  desc:"The 5th pass goes right — the Blue in the lane reads it and steps in. Won." },
+
+{ label:"Blue Score!", score:4, holder:BL(5), shot:[-2.2, -END-.3],
+  r:R_SET, b:GB([[-1.8,-15.0],[.2,-14.8],[3,-16.0]]), g:G_PLAY,
+  desc:"Win it, then go: one touch out of the feet and straight into the far corner of the bottom goal." },
+
+{ label:"Full Rotation", air:true, score:0, holder:CO, restart:true, netBall:true,
+  r:R_SET, b:B_ATT, g:G_ROT, via:ROT_VIA,
+  desc:"Big transition. All 6 Blues take over the Orange zone as the new attackers. Orange send 3 up to defend in the Red zone; the other 3 drop into the middle." },
+
+{ label:"Coach Restarts Into Red", air:true, score:0, holder:RD(5),
+  r:set(R_SET, 5, [5.6,9.4]), b:B_ATT, g:[[-1.2,11.2],[1.2,13.2],[3.2,10.6], ...G_ROT.slice(3)],
+  desc:"The coach plays a new ball into Red and the cycle starts again — now with Orange defending." }
+].map(mk);
+
+// Game-share pace: first time where the angle allows, runs carry on, keepers go for the shots.
+const ORANGE = '#ff8c1a';                             // bright orange: stands out from the grass
+const DRILL = { teams:[...Array(6).fill('red'), ...Array(6).fill('blue'), ...Array(6).fill(ORANGE), 'yellow', 'yellow', '#8d939c'],
+                roles:[...Array(6).fill('att'), ...Array(6).fill('def'), ...Array(6).fill('att'), 'gk', 'gk', 'att'],
+                oneTouch:true, flow:true, setUp:true, chain:true, gk:[18,19], quick:true, ballK:1.25, gkPush:.3,
+                centre: idx=>{ const ph=PH[idx], z=W(ph.pl[ph.passer])[1]; return z>ZL ? [0,13] : z<-ZL ? [0,-13] : [0,0]; } };
+/*@@END*/
+
+// ── Scene ────────────────────────────────────────────────────────────
+makeFigs();
+const TAGS = [...Array(18).fill(null), 'GK', 'GK', 'Coach'];
+const pool = makePool('pool', 900);
+const shadows = makeShadows('shadows', figs.length+1);
+const tagEls = TAGS.map(tx=>{ if(!tx) return null; const el=document.createElementNS(SVGNS,'text'); el.textContent=tx; document.getElementById('tags').appendChild(el); return el; });
+const $id = id=>document.getElementById(id);
+const ZONES = [quad(-HW, ZL, HW, END), quad(-HW, -ZL, HW, ZL), quad(-HW, -END, HW, -ZL)];
+
+// Camera: k = 0 aerial … 1 framed on a zone; z = where along the pitch (follows the ball)
+const CAMS = { k:0, kv:0, z:0, zv:0 };
+function moveCam(dt, snap){
+  const tk = PH[current].air ? 0 : 1, tz = clamp(SC.ball[1], -13, 13);
+  if(snap){ CAMS.k=tk; CAMS.kv=0; CAMS.z=tz; CAMS.zv=0; }
+  else {                                                                    // critically damped springs
+    const wk=2.6, wz=3.2;
+    CAMS.kv += (wk*wk*(tk-CAMS.k) - 2*wk*CAMS.kv)*dt; CAMS.k += CAMS.kv*dt;
+    CAMS.zv += (wz*wz*(tz-CAMS.z) - 2*wz*CAMS.zv)*dt; CAMS.z += CAMS.zv*dt;
+  }
+  const k=clamp(CAMS.k, 0, 1), e=k*k*(3-2*k), A=CAM_AIR, Z=CAM_ZONE, z=CAMS.z;
+  Object.assign(cam, lookCam({ pos:[0, mix(A.pos[1],Z.y,e), mix(A.pos[2], z-Z.back, e)], look:[0, 0, mix(A.look[2], z, e)],
+                               f:mix(A.f,Z.f,e), cy:mix(A.cy,Z.cy,e) }));
+}
+
+const placeTxt = (id, p)=>{ const s=project(cam, p), el=$id(id); el.setAttribute('x', s[0].toFixed(1)); el.setAttribute('y', s[1].toFixed(1)); };
+// Ground (redrawn each frame — the camera moves): stripes, the three zones, the lines
+let TXT_AT = { goal:[0,3,END], won:[0,2.6,0] };
+function drawGround(){
+  let st='';
+  for(let z=-30; z<30; z+=4) st += polyD(quad(-26, z, 26, z+2));
+  $id('stripes').setAttribute('d', st);
+  ['zR','zB','zG'].forEach((id,k)=>$id(id).setAttribute('d', polyD(ZONES[k])));
+  const L=(a,b)=>lineD([a[0],.005,a[1]], [b[0],.005,b[1]]);
+  $id('marks').setAttribute('d', polyD(quad(-HW, -END, HW, END)) + L([-HW,ZL],[HW,ZL]) + L([-HW,-ZL],[HW,-ZL]));
+  placeTxt('ftGoal', TXT_AT.goal); placeTxt('ftWon', TXT_AT.won); placeTxt('ftSplit', [0, 2.6, 12]);
+}
+// Goals: posts, bar and a sloping net frame (s = which way the net runs)
+function goalItems(items){
+  GOALS.forEach(g=>{
+    const L=g.x-g.w/2, R=g.x+g.w/2, z=g.z, zb=z+g.s*g.d, lo=.35, add=it=>{ if(it) items.push(it); };
+    [L,R].forEach(x=>{ add(segItem([x,0,z],[x,g.h,z], .1, '#f2f2f2')); add(segItem([x,g.h,z],[x,lo,zb], .03, '#bdbdbd')); add(segItem([x,0,zb],[x,lo,zb], .03, '#bdbdbd')); });
+    add(segItem([L,g.h,z],[R,g.h,z], .1, '#f2f2f2'));
+    add(segItem([L,lo,zb],[R,lo,zb], .03, '#bdbdbd')); add(segItem([L,0,zb],[R,0,zb], .03, '#bdbdbd'));
+    for(let k=1;k<8;k++){ const x=mix(L,R,k/8); add(segItem([x,g.h,z],[x,lo,zb], .012, 'rgba(255,255,255,0.4)')); add(segItem([x,lo,zb],[x,0,zb], .012, 'rgba(255,255,255,0.4)')); }
+    for(let k=1;k<4;k++){ const y=g.h*k/4, zz=mix(zb, z, y/g.h); add(segItem([L,y,zz],[R,y,zz], .012, 'rgba(255,255,255,0.3)')); }
+  });
+}
+
+// Pass arrow: one dashed arrow on the grass along the pass being played, gone once the ball arrives.
+// Gold for the split.
+const ARROW = (()=>{
+  const g=document.createElementNS(SVGNS,'g'); g.setAttribute('opacity','0');
+  const l=document.createElementNS(SVGNS,'path'), h=document.createElementNS(SVGNS,'path');
+  l.setAttribute('fill','none'); l.setAttribute('stroke-dasharray','6 3');
+  g.appendChild(l); g.appendChild(h); $id('trail').appendChild(g);
+  return { g, l, h, P:null, col:'' };
+})();
+function setArrow(P, ph){
+  ARROW.P = P && !P.shot ? P : null; ARROW.col = ph && ph.splitP ? '#f0a500' : 'rgba(255,255,255,0.75)';
+  ARROW.g.setAttribute('opacity', ARROW.P ? '0.9' : '0');
+}
+function drawArrow(){
+  const P=ARROW.P; if(!P) return;
+  const A=P.A, Bt=P.rest, u=unit([Bt[0]-A[0], Bt[1]-A[1]]), n=[-u[1], u[0]];
+  const s=[A[0]+u[0]*.35, A[1]+u[1]*.35], e=[Bt[0]-u[0]*.35, Bt[1]-u[1]*.35];
+  ARROW.l.setAttribute('stroke', ARROW.col); ARROW.l.setAttribute('stroke-width', ARROW.col[0]==='#' ? '2.2' : '1.6');
+  ARROW.l.setAttribute('d', lineD([s[0],.01,s[1]], [e[0]-u[0]*.2,.01,e[1]-u[1]*.2]));
+  ARROW.h.setAttribute('fill', ARROW.col);
+  ARROW.h.setAttribute('d', polyD([[e[0]+u[0]*.2,.01,e[1]+u[1]*.2],[e[0]-u[0]*.3+n[0]*.22,.01,e[1]-u[1]*.3+n[1]*.22],[e[0]-u[0]*.3-n[0]*.22,.01,e[1]-u[1]*.3-n[1]*.22]]));
+}
+
+// Pass counter: 7 pips (the 7th = shoot)
+const pipsEl=$id('pips');
+for(let i=0;i<7;i++){ const p=document.createElement('div'); p.className='pip'; p.textContent=i+1; pipsEl.appendChild(p); }
+// Board once a pass has arrived: pips, the split / WON IT! flashes; the pass arrow goes.
+function setBoard(idx, done){
+  if(done) setArrow(null);
+  const ph=PH[idx], n = done ? ph.score : Math.max(0, ph.score-1), split = done && !!ph.splitP, won = done && !!ph.intercept;
+  const team = ph.holder<6 ? 'Red' : ph.holder<12 ? (ph.intercept || ph.shot ? 'Blue' : 'Orange') : ph.holder<18 ? 'Orange' : (idx>=PH.length-2 ? 'Red' : idx>=10 ? 'Orange' : 'Red');
+  pipsEl.querySelectorAll('.pip').forEach((p,i)=>{
+    p.classList.remove('on','split','win');
+    if(i<n) p.classList.add(i===6 ? 'win' : 'on');
+  });
+  const sl=$id('scoreLbl');
+  sl.textContent = won || (ph.shot && ph.holder>=6 && ph.holder<12) ? 'Blue won it → shoot' : n>=7 ? team+': 7 → shoot!' : team+': 7 passes, then shoot';
+  sl.style.color = won ? '#1a6eb5' : n>=7 ? '#22b56e' : '#555';
+  ['ftSplit'].forEach(id=>$id(id).classList.toggle('show', split));
+  $id('ftWon').classList.toggle('show', won);
+}
+
+// The finished ball stays in the net while the next ball goes in
+let NET_BALL=null;
+// Starts a phase; returns seconds until Auto plays on.
+function applyScene(idx, t, snap){
+  const ph=PH[idx], prevP=SC.P, plan=scenePhase(idx, t, snap);
+  NET_BALL = ph.netBall && !snap && prevP && prevP.shot ? prevP.rest.slice() : ph.netBall && snap ? W(PH[idx-1].shot) : null;
+  $id('ftGoal').classList.remove('show');
+  if(ph.shot) TXT_AT.goal=[0, 3.2, ph.shot[1]>0 ? END : -END];
+  if(ph.intercept) TXT_AT.won=[W(ph.pl[ph.holder])[0], 2.8, W(ph.pl[ph.holder])[1]];
+  if(!plan){ setBoard(idx, true); if(ph.shot) $id('ftGoal').classList.add('show'); moveCam(0, true); return 0; }
+  const P=plan.P;
+  if(P && P.shot){ setBoard(idx, true); SC.ev.push({ at:t+P.tArr, fn:()=>$id('ftGoal').classList.add('show') }); }
+  else if(P){
+    setBoard(idx, false);
+    if(P.inc) SC.ev.push({ at:t+P.tKick+.001, fn:()=>setArrow(P, ph) });   // after the last pass lands
+    else setArrow(P, ph);
+    SC.ev.push({ at:t+P.tArr, fn:()=>setBoard(idx, true) });                // the pass counts when it arrives
+  } else setBoard(idx, true);
+  if(ph.restart) return ph.hold!=null ? ph.hold : Math.max(plan.end, 2.5);
+  return flowNext(idx, plan);
+}
+function updateScene(t, dt){ sceneUpdate(t, dt); moveCam(dt, false); }
+
+function renderScene(){
+  drawGround(); drawArrow();
+  const items=[];
+  goalItems(items);
+  peopleItems(items, shadows);
+  if(NET_BALL){ const o=dotItem([NET_BALL[0], BR, NET_BALL[1]], .13, '#1b1b1b', .002), w=dotItem([NET_BALL[0], BR, NET_BALL[1]], .115, '#f4f4f4'); if(o) items.push(o); if(w) items.push(w); }
+  figs.forEach((f,i)=>{
+    shadows[i].setAttribute('opacity', (1-Math.min(.7, f.lift*2)).toFixed(2));
+    const el=tagEls[i]; if(!el) return;
+    const s=project(cam, [f.x, 2.12, f.z]); el.setAttribute('x', s[0].toFixed(1)); el.setAttribute('y', s[1].toFixed(1));
+  });
+  drawItems(pool, items);
+}
+
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  UI                                                              ║
+// ╚══════════════════════════════════════════════════════════════════╝
+let current=0, isAuto=false, timer=null;
+const now = ()=>performance.now()/1000;
+function retrigger(el, cls){ el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+
+function applyPhase(idx, snap){
+  const ph=PH[idx];
+  const dur=applyScene(idx, now(), snap);
+  document.getElementById('badge').textContent=ph.label.replace(' — ',' · ');
+  document.getElementById('desc').textContent=ph.desc;
   document.querySelectorAll('.step-dot').forEach((d,i)=>{
     d.classList.toggle('active', i===idx);
     d.classList.toggle('done',   i<idx);
   });
   document.getElementById('prevBtn').style.opacity = idx===0 ? '0.3':'1';
-  document.getElementById('nextBtn').style.opacity = idx===phases.length-1 ? '0.3':'1';
-
-  const hasSubs = ph.subSteps && ph.subSteps.length;
-  if(!hasSubs){
-    renderState(ph, ph.showGoal);
-    if(ph.showGoal && ph.goalPulse){
-      els[ph.goalPulse].forEach(el=>{
-        el.classList.add('pulse');
-        setTimeout(()=>el.classList.remove('pulse'),1800);
-      });
-    }
-    if(isAuto && idx<phases.length-1){
-      autoTimer = setTimeout(()=>{ current++; applyPhase(current); }, NORMAL_MS);
-    }
-    return;
-  }
-
-  // Sub-step playback
-  let s = 0;
-  const playSub = () => {
-    if(s < ph.subSteps.length){
-      const sub = ph.subSteps[s];
-      const merged = {
-        red:   sub.red   || ph.red,
-        blue:  sub.blue  || ph.blue,
-        green: sub.green || ph.green,
-        ball:  sub.ball  || ph.ball,
-        arrows: sub.arrows ?? ph.arrows
-      };
-      renderState(merged, false);
-      if(sub.flash) showFlash(sub.flash, sub.intercept); else hideFlash();
-      s++;
-      subTimer = setTimeout(playSub, SUB_STEP_MS);
-    } else {
-      // Final phase state (the goal)
-      hideFlash();
-      renderState(ph, ph.showGoal);
-      if(ph.showGoal && ph.goalPulse){
-        els[ph.goalPulse].forEach(el=>{
-          el.classList.add('pulse');
-          setTimeout(()=>el.classList.remove('pulse'),1800);
-        });
-      }
-      if(isAuto && idx<phases.length-1){
-        autoTimer = setTimeout(()=>{ current++; applyPhase(current); }, SETTLE_MS);
-      }
-    }
-  };
-  playSub();
+  document.getElementById('nextBtn').style.opacity = idx===PH.length-1 ? '0.3':'1';
+  return dur;
 }
 
+// Forward plays the pass and the movement; Back jumps straight to the earlier board.
+// Next pressed while the ball is still travelling: settle that board first, then play on.
 function changePhase(dir){
-  const next = Math.max(0, Math.min(phases.length-1, current+dir));
-  if(next!==current){ current=next; applyPhase(current); }
-  else if(current===phases.length-1 && isAuto) stopAuto();
+  const next=clamp(current+dir, 0, PH.length-1);
+  if(next===current) return;
+  if(dir>0 && SC.P && now()<SC.t0+SC.P.tRest) applyScene(current, now(), true);
+  current=next;
+  applyPhase(current, dir<0);
 }
 
+// Auto: one flowing rondo — each pass is played straight off the first touch (or first time),
+// while the others are still moving (setup holds 2.5 s)
+function scheduleNext(wait){
+  timer=setTimeout(()=>{
+    if(current<PH.length-1){ current++; scheduleNext(applyPhase(current)); }
+    else stopAuto();
+  }, (wait>0 ? wait : 2.5)*1000);
+}
 function toggleAuto(){
   if(isAuto){ stopAuto(); return; }
   isAuto=true;
   document.getElementById('playBtn').textContent='⏸ Pause';
-  if(current===phases.length-1){ current=0; }
-  applyPhase(current);
+  if(current===PH.length-1){ current=0; applyPhase(0, true); }
+  scheduleNext(0);
 }
-
 function stopAuto(){
-  isAuto=false;
-  clearTimers();
+  isAuto=false; clearTimeout(timer);
   document.getElementById('playBtn').textContent='▶ Auto';
 }
 
-// ── Init ─────────────────────────────────────────────────────────────
-phases.forEach((_,i)=>{
-  const d=document.createElement('div');
-  d.className='step-dot';
-  document.getElementById('stepDots').appendChild(d);
-});
+let last=now();
+function frame(){
+  const t=now(), dt=clamp(t-last, 1/240, .05); last=t;
+  updateScene(t, dt); renderScene();
+  requestAnimationFrame(frame);
+}
 
-createAll();
-applyPhase(0);
+PH.forEach(()=>{ const d=document.createElement('div'); d.className='step-dot'; document.getElementById('stepDots').appendChild(d); });
+applyPhase(0, true);
+requestAnimationFrame(frame);
 </script>
 </body>
 </html>
